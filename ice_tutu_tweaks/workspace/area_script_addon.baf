@@ -1,0 +1,9 @@
+           IF
+                Global("KRESS_QUEST","GLOBAL",3)
+                !Global("#HIDDENS_vslysan","MYAREA",1)
+           THEN
+                 RESPONSE #100
+                    SetGlobal("#HIDDENS_vslysan","MYAREA",1)
+       
+CreateCreature("#3001h6",[474.402],0)
+Continue()END

@@ -1,0 +1,54 @@
+BACKUP ~ssltemp/backup~ // location to store files for uninstall purposes
+AUTHOR ~xxx~ // email address displayed if install fails
+
+BEGIN ~Generate List~
+
+COPY ~weiduinput.txt~ ~override~
+	READ_2DA_ENTRY 0 0 1 ~thevar~
+	READ_2DA_ENTRY 0 1 1 ~thetype~
+	READ_2DA_ENTRY 0 2 1 ~thevarname~
+BUT_ONLY_IF_IT_CHANGES
+
+PRINT ~%thevarname%~
+
+COPY_EXISTING_REGEXP GLOB ~.+\.itm$~ ~ssltemp~
+  PATCH_IF (SOURCE_SIZE > 0x71) THEN BEGIN // protects against invalid files - borrowed from TutuTweaks
+	READ_BYTE 0x18 ~droppablebyte~
+	PATCH_IF ((~%droppablebyte%~ BAND ~0b00000100~)=~0b00000100~) THEN BEGIN
+		READ_LONG 0x6a ~effoffset~
+		READ_SHORT 0x70 ~numeffects~
+		SET ~numglobalsofar~=0
+		SET ~result~=0
+		SET ~killresult~=0
+		PATCH_IF (~thetype~=101) THEN BEGIN
+			WHILE (~numglobalsofar~<~numeffects~) BEGIN
+				SET ~editloc~=~%effoffset%~+0x30*~%numglobalsofar%~
+				READ_SHORT ~%editloc%~ ~type~
+				READ_SHORT ~%editloc%~+0x8 ~effect~
+				READ_BYTE ~%editloc%~+0xc ~equipcheck~
+				PATCH_IF (~%type%~=101 AND ~%effect%~=~%thevar%~ AND ~%equipcheck%~=2) THEN BEGIN
+					SET ~result~=1
+				END 
+				SET ~numglobalsofar~=~numglobalsofar~+1
+			END
+		END
+		PATCH_IF (~thetype~=206) THEN BEGIN
+			WHILE (~numglobalsofar~<~numeffects~) BEGIN
+				SET ~editloc~=~%effoffset%~+0x30*~%numglobalsofar%~
+				READ_SHORT ~%editloc%~ ~type~
+				READ_ASCII ~%editloc%~+0x14 ~effect~
+				READ_BYTE ~%editloc%~+0xc ~equipcheck~
+				PATCH_IF (~%type%~=206 AND NOT ~%effect%~ STRING_COMPARE_CASE ~%thevar%~ = 1 AND ~%equipcheck%~=2) THEN BEGIN
+					SET ~result~=1
+				END 
+				SET ~numglobalsofar~=~numglobalsofar~+1
+			END
+		END
+
+
+		PATCH_IF (~result~=1 AND ~killresult~=0) THEN BEGIN
+		WRITE_ASCII 0x10 ~DAVID~ // just change the file to force it to move
+		END
+	END
+END
+BUT_ONLY_IF_IT_CHANGES

@@ -1,0 +1,9 @@
+
+INCLUDE FILE(scsii/genai/chase_top.ssl)
+
+IF TRIGGER
+   RequireBlock(InitialiseChase)
+THEN DO
+     Action(Literal)
+     SetGlobal("test","GLOBAL",1)
+END

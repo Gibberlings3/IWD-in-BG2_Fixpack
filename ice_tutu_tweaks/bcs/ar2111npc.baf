@@ -1,0 +1,9 @@
+IF
+  !Global("DW#SpawnedNPCs","AR2111",1)
+THEN 
+   RESPONSE #100
+      SetGlobal("DW#SpawnedNPCs","AR2111",1)
+      CreateCreature("dw#sylee",[66.224],13)
+      CreateCreature("dw#morga",[355.224],1)
+      Continue()
+END

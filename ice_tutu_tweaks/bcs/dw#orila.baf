@@ -1,0 +1,12 @@
+IF
+  True()
+THEN
+    RESPONSE #100
+             CutSceneID("orrick")
+             Wait(2)
+             CreateCreature("dw#ilaun",[428.249],4)
+             Wait(1)
+             SetGlobal("dw#ilaunaoffer","GLOBAL",2)
+             StartDialogNoSet(Player1)
+             EndCutSceneMode()
+END

@@ -1,0 +1,8 @@
+IF
+  !Global("DW#SpawnedNPCs","AR2114",1)
+THEN
+   RESPONSE #100
+      SetGlobal("DW#SpawnedNPCs","AR2114",1)
+      CreateCreature("dw#elyvi",[207.178],11)
+      Continue()
+END

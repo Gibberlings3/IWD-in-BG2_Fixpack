@@ -1,0 +1,5 @@
+IF
+	See(Cat)
+THEN
+	Pet(Cat)
+END

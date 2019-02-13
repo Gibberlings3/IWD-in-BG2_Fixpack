@@ -1,0 +1,191 @@
+
+IF
+	Global("J#HPStart6","GLOBAL",0)
+	XPLT(Player6,2)
+THEN
+	RESPONSE #100
+		ApplySpellRES("J#HP01",Player6) // No such index
+		ApplySpellRES("jpremove",Player6) // No such index
+		SetGlobal("J#HPStart6","GLOBAL",1)
+		Continue()
+END
+
+IF
+	Kit(Player6,BARBARIAN)
+	Global("JPReduceHP6","GLOBAL",0)
+	XPLT(Player6,2)
+THEN
+	RESPONSE #100
+		ApplySpellRES("J#hp11",Player6) // No such index
+		SetGlobal("JPReduceHP6","GLOBAL",1)
+		Continue()
+END
+
+IF
+	!Kit(Player6,BARBARIAN)
+	!Class(Player6,MONK)
+	OR(3)
+	     Class(Player6,FIGHTER)
+	     Class(Player6,RANGER)
+	     Class(Player6,PALADIN)
+	Global("JPReduceHP6","GLOBAL",0)
+	XPLT(Player6,2)
+THEN
+	RESPONSE #100
+		ApplySpellRES("J#hp9",Player6) // No such index
+		SetGlobal("JPReduceHP6","GLOBAL",1)
+		Continue()
+END
+
+IF
+	OR(3)
+	     Class(Player6,FIGHTER_CLERIC)
+	     Class(Player6,CLERIC_RANGER)
+	     Class(Player6,FIGHTER_DRUID)
+	Global("JPReduceHP6","GLOBAL",0)
+	XPLT(Player6,2)
+THEN
+	RESPONSE #100
+		ApplySpellRES("J#hp8",Player6) // No such index
+		SetGlobal("JPReduceHP6","GLOBAL",1)
+		Continue()
+END
+
+IF
+        OR(4)
+            Class(Player6,FIGHTER_THIEF)
+            Class(Player6,CLERIC)
+            Class(Player6,DRUID)
+            Class(Player6,MONK)
+	Global("JPReduceHP6","GLOBAL",0)
+	XPLT(Player6,2)
+THEN
+	RESPONSE #100
+		ApplySpellRES("J#hp7",Player6) // No such index
+		SetGlobal("JPReduceHP6","GLOBAL",1)
+		Continue()
+END
+
+IF
+	OR(3)
+	     Class(Player6,FIGHTER_MAGE)
+	     Class(Player6,CLERIC_THIEF)
+	     Class(Player6,FIGHTER_MAGE_CLERIC)
+	Global("JPReduceHP6","GLOBAL",0)
+	XPLT(Player6,2)
+THEN
+	RESPONSE #100
+		ApplySpellRES("J#hp6",Player6) // No such index
+		SetGlobal("JPReduceHP6","GLOBAL",1)
+		Continue()
+END
+
+IF
+	OR(4)
+	     Class(Player6,FIGHTER_MAGE_THIEF)
+	     Class(Player6,CLERIC_MAGE)
+	     Class(Player6,THIEF)
+	     Class(Player6,BARD)
+	Global("JPReduceHP6","GLOBAL",0)
+	XPLT(Player6,2)
+THEN
+	RESPONSE #100
+		ApplySpellRES("J#hp5",Player6) // No such index
+		SetGlobal("JPReduceHP6","GLOBAL",1)
+		Continue()
+END
+
+IF
+	Class(Player6,MAGE_THIEF)
+	Global("JPReduceHP6","GLOBAL",0)
+	XPLT(Player6,2)
+THEN
+	RESPONSE #100
+		ApplySpellRES("J#hp4",Player6) // No such index
+		SetGlobal("JPReduceHP6","GLOBAL",1)
+		Continue()
+END
+
+IF
+	OR(2)
+	     Class(Player6,MAGE)
+	     Class(Player6,SORCERER)
+	Global("JPReduceHP6","GLOBAL",0)
+	XPLT(Player6,2)
+THEN
+	RESPONSE #100
+		ApplySpellRES("J#hp3",Player6) // No such index
+		SetGlobal("JPReduceHP6","GLOBAL",1)
+		Continue()
+END
+
+IF
+   Global("JPConMod6","GLOBAL",0)
+   CheckStatGT(Player6,14,CON)
+   XPLT(Player6,2)
+THEN
+    RESPONSE #100
+             SetGlobal("JPConMod6","GLOBAL",1)
+	     ApplySpellRES("J#hp1",Player6) // No such index
+             Continue()
+END
+
+IF
+   Global("JPConMod6","GLOBAL",0)
+   CheckStatGT(Player6,15,CON)
+   XPLT(Player6,2)
+THEN
+    RESPONSE #100
+             SetGlobal("JPConMod6","GLOBAL",1)
+	     ApplySpellRES("J#hp1",Player6) // No such index
+             Continue()
+END
+
+IF
+   Global("JPConMod6","GLOBAL",0)
+   CheckStat(Player6,17,CON)
+   !Class(Player6,MONK)
+   OR(3)
+         Class(Player6,FIGHTER_ALL)
+         Class(Player6,RANGER_ALL)
+         Class(Player6,PALADIN_ALL)
+   XPLT(Player6,2)
+THEN
+    RESPONSE #100
+             SetGlobal("JPConMod6","GLOBAL",1)
+             ApplySpellRES("J#hp1",Player6) // No such index
+             Continue()
+END
+
+IF
+   Global("JPConMod6","GLOBAL",0)
+   CheckStat(Player6,18,CON)
+   !Class(Player6,MONK)
+   OR(3)
+         Class(Player6,FIGHTER_ALL)
+         Class(Player6,RANGER_ALL)
+         Class(Player6,PALADIN_ALL)
+   XPLT(Player6,2)
+THEN
+    RESPONSE #100
+             SetGlobal("JPConMod6","GLOBAL",1)
+	     ApplySpellRES("J#hp2",Player6) // No such index
+             Continue()
+END
+
+IF
+   Global("JPConMod6","GLOBAL",0)
+   CheckStat(Player6,19,CON)
+   !Class(Player6,MONK)
+   OR(3)
+         Class(Player6,FIGHTER_ALL)
+         Class(Player6,RANGER_ALL)
+         Class(Player6,PALADIN_ALL)
+   XPLT(Player6,2)
+THEN
+    RESPONSE #100
+             SetGlobal("JPConMod6","GLOBAL",1)
+	     ApplySpellRES("J#hp3",Player6) // No such index
+             Continue()
+END
+

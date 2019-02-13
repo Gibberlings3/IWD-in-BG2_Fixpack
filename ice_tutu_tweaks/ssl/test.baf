@@ -1,0 +1,7 @@
+VARIABLE(cat=cat)
+IF
+See(Cat)
+THEN
+Pet(Cat)
+END
+

@@ -1,0 +1,7 @@
+IF
+  !NumTimesTalkedTo(0)
+  !GlobalGT("dw#ilaunaoffer","GLOBAL",1)
+THEN
+    RESPONSE #100
+             StartDialogNoSet(Player1)
+END

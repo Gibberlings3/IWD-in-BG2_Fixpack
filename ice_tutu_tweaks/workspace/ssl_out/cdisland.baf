@@ -1,0 +1,77 @@
+IF
+!Global("9300_ON_ISLAND","GLOBAL",0)
+!Range(Player1,30)
+THEN
+RESPONSE #100
+SetGlobal("9300_ON_ISLAND","GLOBAL",0)
+END
+
+IF
+!Global("9300_ON_ISLAND","GLOBAL",0)
+InParty(Player2)
+!Range(Player2,30)
+THEN
+RESPONSE #100
+SetGlobal("9300_ON_ISLAND","GLOBAL",0)
+END
+
+IF
+!Global("9300_ON_ISLAND","GLOBAL",0)
+InParty(Player3)
+!Range(Player3,30)
+THEN
+RESPONSE #100
+SetGlobal("9300_ON_ISLAND","GLOBAL",0)
+END
+
+IF
+!Global("9300_ON_ISLAND","GLOBAL",0)
+InParty(Player4)
+!Range(Player4,30)
+THEN
+RESPONSE #100
+SetGlobal("9300_ON_ISLAND","GLOBAL",0)
+END
+
+IF
+!Global("9300_ON_ISLAND","GLOBAL",0)
+InParty(Player5)
+!Range(Player5,30)
+THEN
+RESPONSE #100
+SetGlobal("9300_ON_ISLAND","GLOBAL",0)
+END
+
+IF
+!Global("9300_ON_ISLAND","GLOBAL",0)
+InParty(Player6)
+!Range(Player6,30)
+THEN
+RESPONSE #100
+SetGlobal("9300_ON_ISLAND","GLOBAL",0)
+END
+
+IF
+Global("9300_ON_ISLAND","GLOBAL",0)
+Range(Player1,30)
+OR(2)
+!InParty(Player2)
+Range(Player2,30)
+OR(2)
+!InParty(Player3)
+Range(Player3,30)
+OR(2)
+!InParty(Player4)
+Range(Player4,30)
+OR(2)
+!InParty(Player5)
+Range(Player5,30)
+OR(2)
+!InParty(Player6)
+Range(Player6,30)
+THEN
+RESPONSE #100
+SetGlobal("9300_ON_ISLAND","GLOBAL",1)
+SetGlobal("9300_RESET_TEAMS","GLOBAL",1)
+END
+

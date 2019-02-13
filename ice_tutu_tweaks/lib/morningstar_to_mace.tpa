@@ -1,0 +1,8 @@
+COPY_EXISTING_REGEXP GLOB ~.*\.itm~ ~override~
+READ_ASCII 0x22 "anim" (2)
+READ_BYTE 0x31 "prof"
+PATCH_IF ("%prof%" = 100 AND (("%anim%" STRING_COMPARE_CASE "ms" = 0)
+OR ("%anim%" STRING_COMPARE_CASE "mc" = 0))) BEGIN // morningstars
+WRITE_BYTE 0x31 101 // mace prof
+END
+BUT_ONLY

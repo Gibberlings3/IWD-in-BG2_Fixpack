@@ -1,0 +1,599 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////              Define some symbols
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+OUTER_SPRINT ~percentage~ ~%~
+OUTER_SPRINT ~tilde~ "~"
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////              Turn function(arguments) into two strings, function and arglist
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+DEFINE_ACTION_FUNCTION process_function
+        STR_VAR
+               input=""
+        RET
+               function
+               arglist
+
+BEGIN
+
+        OUTER_SET ~length~=STRING_LENGTH ~%input%~
+        OUTER_INNER_PATCH_SAVE ~input~ ~%input%~ BEGIN
+           SET i=0
+           WRITE_ASCII (~length~ - 1) ~"~
+           WHILE(i<length) BEGIN
+              READ_ASCII i char (1)
+              PATCH_IF ~%char%~ STRING_EQUAL_CASE ~(~ BEGIN
+                 WRITE_ASCII i ~"~
+                 INSERT_BYTES i 1
+                 WRITE_ASCII i ~ ~
+                 SET i=length
+              END ELSE BEGIN
+                 SET i=i+1
+              END
+           END
+        END
+        OUTER_SPRINT ~output~ ~ACTION_DEFINE_ARRAY temp_array BEGIN %input% END~
+
+        <<<<<<<< temp_include.txt
+              %output%
+        >>>>>>>>
+        COPY ~temp_include.txt~ ~temp_include2.txt~ EVALUATE_BUFFER
+        REINCLUDE ~temp_include2.txt~
+        OUTER_SPRINT ~function~ $temp_array(0)
+        OUTER_SPRINT ~arglist~ $temp_array(1)
+
+END
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////               break a comma-separated value string into its components
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+DEFINE_ACTION_FUNCTION decompose_CSV 
+         STR_VAR
+                input=""
+         RET
+                argument_0
+                argument_1
+                argument_2
+                argument_3
+                argument_4
+                argument_5
+                argument_6
+                argument_7
+                argument_8
+                argument_9
+BEGIN
+     OUTER_SPRINT ~input~ EVALUATE_BUFFER ~%input%~
+     OUTER_INNER_PATCH_SAVE ~output_csv~ ~ACTION_DEFINE_ARRAY temp_array BEGIN %input% END~ BEGIN
+         REPLACE_TEXTUALLY ~,~ ~ ~
+     END
+       <<<<<<<< temp_file
+       %output_csv%
+       >>>>>>>>
+       COPY temp_file temp_file2 EVALUATE_BUFFER
+       REINCLUDE temp_file2
+     OUTER_FOR (i=0;i<10;i=i+1) BEGIN
+        ACTION_IF (VARIABLE_IS_SET $temp_array(EVALUATE_BUFFER ~%i%~)) AND $temp_array(EVALUATE_BUFFER ~%i%~) STRING_COMPARE_CASE ~~ AND $temp_array(EVALUATE_BUFFER ~%i%~) STRING_COMPARE_CASE ~ ~ BEGIN
+               OUTER_SPRINT EVALUATE_BUFFER ~argument_%i%~ $temp_array(~%i%~)
+               OUTER_SPRINT ~temp~ $argument(~%i%~)
+        END ELSE BEGIN
+               OUTER_SPRINT EVALUATE_BUFFER ~argument_%i%~ ~null~
+        END
+     END
+END
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////               call a function in f(x,y,z) notation (note that the function's returns, if any, will be lost)
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DEFINE_PATCH_FUNCTION call_patch_function
+      STR_VAR input=""
+BEGIN
+   INNER_ACTION BEGIN
+       LAUNCH_ACTION_FUNCTION process_function STR_VAR input=EVALUATE_BUFFER ~%input%~ RET function=function arglist=arglist END
+       LAUNCH_ACTION_FUNCTION decompose_CSV
+            STR_VAR input=EVALUATE_BUFFER ~%%arglist%%~
+            RET argument_0=argument_0
+                argument_1=argument_1
+                argument_2=argument_2
+                argument_3=argument_3
+                argument_4=argument_4
+                argument_5=argument_5
+                argument_6=argument_6
+                argument_7=argument_7
+                argument_8=argument_8
+                argument_9=argument_9
+       END
+       OUTER_SPRINT ~string~ ~LAUNCH_PATCH_FUNCTION %function% STR_VAR~
+       OUTER_FOR (i=0;i<10;i=i+1) BEGIN
+          ACTION_IF $argument(EVALUATE_BUFFER ~%i%~) STRING_COMPARE_CASE ~null~ BEGIN
+             OUTER_SPRINT ~temp~ $argument(EVALUATE_BUFFER ~%i%~)
+             OUTER_SPRINT ~string~ ~%string% %temp%~
+          END ELSE BEGIN
+             OUTER_SET i=10
+          END
+       END
+       OUTER_SPRINT ~string~ ~%string% END~
+   END
+   LAUNCH_PATCH_FUNCTION patch_reinclude_this STR_VAR input=EVALUATE_BUFFER ~%string%~ END
+END
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////               take key=>value as input, return key and value separately
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DEFINE_ACTION_FUNCTION decompose_arrow
+         STR_VAR input=""
+         RET     key
+                 value
+BEGIN
+     OUTER_SPRINT ~input~ EVALUATE_BUFFER ~%input%~
+     OUTER_INNER_PATCH_SAVE ~output~ ~ACTION_DEFINE_ARRAY temp_array BEGIN %input% END~ BEGIN
+         REPLACE_TEXTUALLY ~=>~ ~ ~
+     END
+       <<<<<<<< temp_file
+       %output%
+       >>>>>>>>
+       COPY temp_file temp_file2 EVALUATE_BUFFER
+       REINCLUDE temp_file2
+       OUTER_SPRINT key ~%temp_array_0%~
+       OUTER_SPRINT value ~%temp_array_1%~
+
+END
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////               as a patch, take a CSV, break it down, and for each entry INCLUDE a string (should be a function call) with <argument> set to its ith value
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DEFINE_PATCH_FUNCTION process_csv_instruction
+           STR_VAR filename=""
+                   input=""
+                   instruction=""
+BEGIN
+          PATCH_IF ~%input%~ STRING_COMPARE "" BEGIN
+
+             INNER_ACTION BEGIN
+                LAUNCH_ACTION_FUNCTION decompose_CSV
+                         STR_VAR input=EVALUATE_BUFFER ~%%input%%~
+                         RET argument_0=argument_0
+                           argument_1=argument_1
+                           argument_2=argument_2
+                           argument_3=argument_3
+                           argument_4=argument_4
+                           argument_5=argument_5
+                           argument_6=argument_6
+                           argument_7=argument_7
+                           argument_8=argument_8
+                           argument_9=argument_9
+                END
+             END
+             FOR (i=0;i<10;i=i+1) BEGIN
+                SPRINT ~temp~ $argument(EVALUATE_BUFFER ~%i%~)
+                PATCH_IF ~%temp%~ STRING_COMPARE_CASE ~null~ BEGIN
+                       SPRINT ~instruction~ EVALUATE_BUFFER ~%%instruction%%~
+                       INNER_PATCH_SAVE instruction2 ~%instruction%~ BEGIN
+                              REPLACE_TEXTUALLY ~<argument>~ ~%temp%~
+                       END
+                       LAUNCH_PATCH_FUNCTION patch_reinclude_this STR_VAR input= EVALUATE_BUFFER ~%instruction2%~ END
+                END
+             END
+
+          END
+END
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////               as a patch, take a list of key=>value s separated by some symbol, break it down, and for each entry INCLUDE a string (should usually be a function call) with <KEY> and <VALUE> set to their values
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DEFINE_PATCH_FUNCTION process_csv_of_arrows
+           STR_VAR filename=""
+                   input=""
+                   instruction=""
+                   sec_instruction=""
+                   separator=" "
+BEGIN
+      PATCH_IF ~%input%~ STRING_COMPARE "" BEGIN
+             INNER_PATCH_SAVE ~output~ ~ACTION_DEFINE_ASSOCIATIVE_ARRAY temp_assoc BEGIN %input% END~ BEGIN
+                REPLACE_TEXTUALLY ~%separator%~ ~ ~
+             END
+          INNER_ACTION BEGIN
+          <<<<<<<< temp_file
+          %output%
+          >>>>>>>>
+             COPY temp_file temp_file2 EVALUATE_BUFFER
+
+             REINCLUDE ~temp_file2~
+          END
+          PHP_EACH temp_assoc AS key => value BEGIN
+                   INNER_PATCH_SAVE instruction2 ~%instruction%~ BEGIN
+                      REPLACE_TEXTUALLY ~<key>~ ~%key%~
+                      REPLACE_TEXTUALLY ~<value>~ ~%value%~
+                   END
+                   INNER_PATCH_SAVE sec_instruction2 ~%sec_instruction%~ BEGIN
+                      REPLACE_TEXTUALLY ~<key>~ ~%key%~
+                      REPLACE_TEXTUALLY ~<value>~ ~%value%~
+                   END
+                   LAUNCH_PATCH_FUNCTION patch_reinclude_this STR_VAR input= EVALUATE_BUFFER ~%instruction2%~ END
+
+          END
+      END
+
+END
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////               general warning message
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+DEFINE_PATCH_FUNCTION patch_display_warning
+         STR_VAR
+             warning=""
+BEGIN
+        PATCH_PRINT ~%warning%~
+END
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////               include a string as a line of code (NB: you can't define variables this way, because they're in the scope of the function)
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+DEFINE_ACTION_FUNCTION action_reinclude_this
+        STR_VAR
+             input=""
+BEGIN
+       <<<<<<<< temp_file
+       %input%
+       >>>>>>>>
+       COPY temp_file temp_file2 EVALUATE_BUFFER
+       REINCLUDE temp_file2
+END
+
+
+
+DEFINE_PATCH_FUNCTION patch_reinclude_this
+        STR_VAR
+             input=""
+BEGIN
+       INNER_ACTION BEGIN
+       <<<<<<<< temp_file
+       %input%
+       >>>>>>>>
+          COPY temp_file temp_file2 EVALUATE_BUFFER
+       END
+       PATCH_REINCLUDE temp_file2
+END
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////               look up a string in an IDS table and write the result to the specified location
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+DEFINE_PATCH_FUNCTION field_write_with_IDS_lookup
+         INT_VAR offset=0
+         STR_VAR IDS_file=""
+                 IDS_entry=""
+                 write_length=""
+         RET     success
+     BEGIN
+          INNER_ACTION BEGIN
+             COPY_EXISTING ~%IDS_file%.ids~ ~override~
+                   READ_2DA_ENTRIES_NOW class_array 2
+                   FOR (i=0;i<class_array;i=i+1) BEGIN
+                      READ_2DA_ENTRY_FORMER class_array i 1 ~class_name~
+                      TO_UPPER ~class_name~
+                      READ_2DA_ENTRY_FORMER class_array i 0 ~class_code_temp~
+                      SPRINT $class_is_defined(~%class_name%~) ~~
+                      SET $class_code(~%class_name%~) = ~class_code_temp~
+                   END
+             BUT_ONLY
+           END
+           PATCH_IF VARIABLE_IS_SET $class_is_defined(EVALUATE_BUFFER ~%IDS_entry%~) BEGIN
+              SET ~temp~= $class_code(~%arguments%~)
+              SPRINT ~command~ ~WRITE_%write_length% %offset% %temp%~
+              LAUNCH_PATCH_FUNCTION patch_reinclude_this STR_VAR input=EVALUATE_BUFFER ~%command%~ END
+              SET success=1
+           END ELSE BEGIN
+              SET success=0
+           END
+     
+END
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////               template for general clone
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DEFINE_ACTION_FUNCTION clone_template
+    STR_VAR
+           file_old=""
+           file_new=""
+           file_ending=""
+           edits=""
+           editstring=""
+    BEGIN
+      SILENT
+      COPY_EXISTING ~%file_old%.%file_ending%~ ~override/%file_new%.%file_ending%~
+
+          LAUNCH_PATCH_FUNCTION apply_patches STR_VAR edits=EVALUATE_BUFFER ~%edits%~ editstring=EVALUATE_BUFFER ~%editstring%~ filename=EVALUATE_BUFFER ~%file_old%~ file_ending=EVALUATE_BUFFER ~%file_ending%~ END
+      BUT_ONLY
+      VERBOSE
+END
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////               general template to apply patches from a list
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+DEFINE_PATCH_FUNCTION apply_patches
+     STR_VAR
+             edits=""
+             editstring=""
+             file_ending=""
+             filename=""
+             offset_base="0"
+BEGIN
+          PHP_EACH EVALUATE_BUFFER ~%edits%~ AS function => arguments BEGIN
+              INNER_PATCH_SAVE ~function2~ ~%function%~ BEGIN
+                 REPLACE_TEXTUALLY ~'~ ~~ // handle duplicates
+              END
+              PATCH_MATCH ~%function2%~ WITH check match type // these aren't function calls
+              BEGIN END
+              DEFAULT
+                 LAUNCH_PATCH_FUNCTION ~%file_ending%_%function2%~ STR_VAR arguments=EVALUATE_BUFFER ~%arguments%~ filename=EVALUATE_BUFFER ~%filename%~ offset_base = EVALUATE_BUFFER "%offset_base%" file_ending=EVALUATE_BUFFER ~%file_ending%~ END
+              END
+          END
+          LAUNCH_PATCH_FUNCTION process_csv_of_arrows
+                       STR_VAR instruction=EVALUATE_BUFFER 
+                                    ~PATCH_MATCH <key> WITH check match type
+                                     BEGIN END
+                                     DEFAULT
+                                       LAUNCH_PATCH_FUNCTION %file_ending%_<key>
+                                                STR_VAR arguments=<value>
+                                                        filename=%filename%
+                                                        offset_base= %offset_base%
+                                                        file_ending=%file_ending%
+                                       END
+                                     END~
+                               input=EVALUATE_BUFFER ~%editstring%~
+          END
+
+END
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////               general template for launching prefixed functions
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+DEFINE_PATCH_FUNCTION launch_prefixed_function
+          STR_VAR function_prefix=""
+                  argument0=""
+                  argument1=""
+                  filename=""
+                  additional_input=""
+BEGIN
+        LAUNCH_PATCH_FUNCTION ~%function_prefix%_%argument0%~ STR_VAR arguments=EVALUATE_BUFFER ~%argument1%~ filename=EVALUATE_BUFFER ~%filename%~  END
+END
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////               define a set of simple data-field-editing functions from a table
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+DEFINE_ACTION_FUNCTION build_simple_data_field_editors
+          STR_VAR lookup_table=""
+                  function_prefix=""
+                  offset_base=""
+
+BEGIN
+       ACTION_PHP_EACH EVALUATE_BUFFER ~%lookup_table%~ AS function => arglist BEGIN
+          LAUNCH_ACTION_FUNCTION decompose_CSV STR_VAR input=EVALUATE_BUFFER ~%arglist%~ RET offset=argument_0 type=argument_1 END
+          ACTION_MATCH ~%offset_base%~
+          WITH 
+          ~~
+          BEGIN
+              OUTER_SPRINT ~offset~ ~%offset%~
+          END
+          DEFAULT
+              OUTER_SPRINT ~offset~ ~(%offset% + %offset_base%)~
+          END
+          ACTION_MATCH ~%type%~ 
+          WITH ~ASCII~
+          BEGIN
+                    OUTER_SPRINT ~definition~
+                           ~DEFINE_PATCH_FUNCTION %function_prefix%_%function% STR_VAR arguments="" offset_base=0 BEGIN WRITE_ASCIIE %offset% "%percentage%arguments%percentage%" (8) END
+                            DEFINE_PATCH_FUNCTION %function_prefix%_read_%function% STR_VAR offset_base=0 RET value BEGIN READ_ASCII %offset% value PATCH_PRINT "read %value% at %offset%" END~
+          END
+          ~ASCII20~
+          BEGIN
+                    OUTER_SPRINT ~definition~
+                           ~DEFINE_PATCH_FUNCTION %function_prefix%_%function% STR_VAR arguments="" offset_base=0 BEGIN WRITE_ASCIIE %offset% "%percentage%arguments%percentage%" (0x20) END
+                            DEFINE_PATCH_FUNCTION %function_prefix%_read_%function% STR_VAR offset_base=0 RET value BEGIN READ_ASCII %offset% value (0x20) NULL  PATCH_PRINT "read %percentage%value%percentage% at %percentage%offset%percentage%" END~
+          END
+          DEFAULT
+                    OUTER_SPRINT ~definition~ ~
+                          DEFINE_PATCH_FUNCTION %function_prefix%_%function% STR_VAR arguments="" offset_base=0 BEGIN WRITE_%type% %offset% arguments END
+                          DEFINE_PATCH_FUNCTION %function_prefix%_%function%GT STR_VAR arguments="" offset_base=0 BEGIN PATCH_IF %type%_AT %offset% < arguments BEGIN WRITE_%type% %offset% arguments END END
+                          DEFINE_PATCH_FUNCTION %function_prefix%_%function%LT STR_VAR arguments="" offset_base=0 BEGIN PATCH_IF %type%_AT %offset% > arguments BEGIN WRITE_%type% %offset% arguments END END
+                          DEFINE_PATCH_FUNCTION %function_prefix%_read_%function% STR_VAR offset_base=0 RET value BEGIN READ_%type% %offset% value END~
+          END
+          LAUNCH_ACTION_FUNCTION action_reinclude_this STR_VAR input=EVALUATE_BUFFER ~%definition%~ END
+       END
+END
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////               read in the offsets for a file type  (this has to be a macro as it's reading in content)
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DEFINE_ACTION_MACRO read_in_offsets
+BEGIN
+    COPY ~%offset_readin_lookup_2da%.2da~ ~%offset_readin_lookup_2da%.2da~
+         READ_2DA_ENTRIES_NOW offset_entry_array 5
+         FOR (i=1;i<offset_entry_array;i=i+1) BEGIN
+            READ_2DA_ENTRY_FORMER offset_entry_array i 0 entry_type
+            SPRINT ~entry_type~ ~%offset_readin_file_prefix%_%entry_type%~
+            READ_2DA_ENTRY_FORMER offset_entry_array i 1 offset
+            READ_2DA_ENTRY_FORMER offset_entry_array i 2 offset_length
+            READ_2DA_ENTRY_FORMER offset_entry_array i 3 num
+            READ_2DA_ENTRY_FORMER offset_entry_array i 4 num_length
+            READ_2DA_ENTRY_FORMER offset_entry_array i 5 entry_length
+            SET $offset_loc(~%entry_type%~) = offset
+            SET $offset_length(~%entry_type%~) = offset_length
+            SET $entrynum_loc(~%entry_type%~) = num
+            SET $entrynum_length(~%entry_type%~) = num_length
+            SET $entry_length(~%entry_type%~) = entry_length
+         END
+    BUT_ONLY
+
+END
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////              go through a set of entries
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DEFINE_PATCH_FUNCTION walk_entries
+         STR_VAR entry_type=""
+                 file_prefix=""
+                 instruction=""
+BEGIN
+         SPRINT ~entry_type~ ~%file_prefix%_%entry_type%~
+         SET offset_loc=$offset_loc(~%entry_type%~)
+         SET offset_length=$offset_length(~%entry_type%~)
+         SET entrynum_loc=$entrynum_loc(~%entry_type%~)
+         SET entrynum_length=$entrynum_length(~%entry_type%~)
+         SET entry_length=$entry_length(~%entry_type%~)
+         GET_OFFSET_ARRAY offset_array offset_loc offset_length entrynum_loc entrynum_length 0 0 entry_length
+         PHP_EACH offset_array AS int => offset_base BEGIN
+               INNER_PATCH_SAVE instruction2 ~%instruction%~ BEGIN
+                  REPLACE_TEXTUALLY ~<offset_base>~ "%offset_base%"
+               END
+              LAUNCH_PATCH_FUNCTION call_patch_function STR_VAR input=EVALUATE_BUFFER ~%instruction2%~ END
+         END
+END
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////               walk the effect tree
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DEFINE_PATCH_FUNCTION walk_effect_tree
+         INT_VAR
+                ab_length=0x28
+         STR_VAR
+                instruction=""
+
+BEGIN
+   GET_OFFSET_ARRAY ab_array 0x64 4 0x68 2 0 0 ~ab_length~
+   PHP_EACH ab_array AS int => ab_off BEGIN
+      GET_OFFSET_ARRAY2 eff_array ab_off ITM_V10_HEAD_EFFECTS
+      PHP_EACH eff_array AS int => eff_off BEGIN
+               READ_SHORT ~eff_off~ ~opcode~
+               SET ~offset_base~=~%eff_off%~
+               INNER_PATCH_SAVE instruction2 ~%instruction%~ BEGIN
+                  REPLACE_TEXTUALLY ~<offset_base>~ ~%offset_base%~
+               END
+              LAUNCH_PATCH_FUNCTION call_patch_function STR_VAR input=EVALUATE_BUFFER ~%instruction2%~ END
+      END
+   END
+
+END
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////               apply a conditional patch
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DEFINE_PATCH_FUNCTION conditional_patch
+           STR_VAR arguments=""
+                   filename=""
+                   file_ending=""
+BEGIN
+
+
+          SPRINT ~output~ ~ACTION_DEFINE_ASSOCIATIVE_ARRAY temp_assoc BEGIN %arguments% END~
+          INNER_ACTION BEGIN
+          <<<<<<<< temp_file
+          %output%
+          >>>>>>>>
+             COPY temp_file temp_file2 EVALUATE_BUFFER
+             REINCLUDE ~temp_file2~
+          END
+          PATCH_FOR_EACH variable IN check match type BEGIN
+             PATCH_IF VARIABLE_IS_SET $temp_assoc(EVALUATE_BUFFER ~%variable%~) BEGIN
+              SPRINT EVALUATE_BUFFER ~%variable%~ $temp_assoc(EVALUATE_BUFFER ~%variable%~)
+             END ELSE BEGIN
+              LAUNCH_PATCH_FUNCTION patch_display_warning STR_VAR warning=EVALUATE_BUFFER "Warning: conditional patch of %filename% is missing a %variable%" END
+            END
+           END
+           LAUNCH_PATCH_FUNCTION walk_entries 
+                  STR_VAR instruction=EVALUATE_BUFFER ~apply_conditional_patches(check=%check%,match=%match%,patches=%tilde%%arguments%%tilde%,file_ending=%file_ending%,filename=%filename%,offset_base=<offset_base>~
+                          file_prefix=EVALUATE_BUFFER ~%file_ending%~
+                          entry_type=EVALUATE_BUFFER ~%type%~
+           END
+
+END
+
+DEFINE_PATCH_FUNCTION apply_conditional_patches
+           STR_VAR check=""
+                   match=""
+                   patches=""
+                   file_ending=""
+                   filename=""
+                   offset_base="0"
+
+BEGIN
+        LAUNCH_PATCH_FUNCTION ~%file_ending%_read_%check%~ STR_VAR offset_base=EVALUATE_BUFFER ~%offset_base%~ RET value=value END
+        PATCH_PRINT ~ at %offset_base%:comparing %value% with %match% following %file_ending%_read_%check%~
+        PATCH_IF ~%value%~ STRING_EQUAL_CASE ~%match%~ BEGIN
+           LAUNCH_PATCH_FUNCTION apply_patches 
+                      STR_VAR offset_base=EVALUATE_BUFFER ~%offset_base%~ 
+                              editstring=EVALUATE_BUFFER ~%patches%~ 
+                              filename=EVALUATE_BUFFER ~%filename%~
+                              file_ending =EVALUATE_BUFFER ~%file_ending%~
+           END
+        END
+END

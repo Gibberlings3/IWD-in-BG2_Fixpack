@@ -1,0 +1,241 @@
+@1 = ~Install NPCs~
+@2 = ~Better calls for help~
+@3 = ~Improved General AI~
+@4 = ~Ease-of-use party AI~
+@5 = ~Spawns are always at maximum difficulty~
+@6 = ~Add map notes~
+@7 = ~Make Heart of Winter accessible at any level~
+@8 = ~Restore (most) BG2 spells and make scrolls available - WARNING: they will look very out of place~
+@9 = ~Never lose access to Orrick the Gray's trade goods~
+@10 = ~Deactivate spawning in Vale of Shadows~
+@11 = ~Fixpack (fixes residual errors in the converter - MUST BE INSTALLED)~
+@12 = ~Remove NPC soundsets from list of PC choice options~
+@13 = ~Game ends when the main character dies~
+@14 = ~NPCs respond to the main character, not to whichever character talks to them~
+@15 = ~IceTutuTweaks NPCs get basic interjections based on existing IWD content~
+@16 = ~First level characters can put more than 2 stars in any one proficiency~
+@17 = ~BG2-style journal [work in progress]~
+
+@22 = ~This component is already installed by another mod.~
+@23 = ~This component requires the "Install NPCs" component to be installed~
+
+@100= ~Syleen~
+@101= ~Ragnar Thundershield~
+@102= ~Vilmar Wolf-Slayer~
+@103= ~Marcus~
+@104= ~Endricane~
+@105=~Eloise~
+@106=~Morgana~
+@107=~Elyvir Blacksheaf~
+@108=~Ilauna~
+@109=~Kori Fire-Eye~
+@110=~Arris Carthimon~
+@111=~Moranir~
+
+@200=~Woman~
+@201=~Dwarf warrior~
+@202=~Barbarian~
+@203=~Black-robed man~
+@204=~Strange man~
+@205=~Young woman~
+@206=~Bard~
+@207=~Elven ranger~
+@208=~Robed woman~
+@209=~Dwarf woman~
+@210=~Robed elf~
+@211=~Druid~
+
+
+@601=~Pre-cast mode activated; not drinking healing potions~
+@602=~Pre-cast mode deactivated~
+@603=~Pre-cast mode activated; drinking healing potions~
+@604=~Pre-cast mode activated; drinking extra-healing potions~
+
+
+@605=~SCS Ease-of-Use AI : ~
+@606=~The AI has 5 functions:
+
+1) The character will fight, prioritising opponents who are not immobile and helpless, not fighting if they're trying to Turn Undead, and not wasting Melf's Minute Meteors, Energy Blades or 
+Invisibilty. You can shift the character between melee (D) and ranged weapons (F) using the hotkeys. If you'd rather that your character did not enter melee, you can toggle melee off by pressing (K). Characters with melee toggled off will fight if enemies are in weapon range but won't be proactive about getting into range. 
+
+2) The character will cast some long-duration spells when out of combat. There are 4 settings for this, which you can toggle through using (S). On setting 1, the character uses no spells. On setting 2 and up, the character will cast all of the following spells if they are memorized (and not already active): Stoneskin, Iron Skins, Armor, Melf's Minute Meteors, Goodberry. 
+
+3) On setting 2 and up, the character will consume Goodberries if injured and out of combat. On setting 3 and up, the character will also consume potions of healing. On setting 4, the character will consume potions of extra-healing.
+
+4) On setting 2 and up, the character will automatically activate the following items once per day: the Cloak of the Stars; the Gargoyle Boots; the Belt of Fortitude.
+
+5) The character will cast some spells, by hotkey, on the whole party. This casting is highly accelerated, cannot be done in combat, and only casts on characters who are not already protected. Its main function is for later in the game when you can afford to carry enough spells to protect the whole party. The hot-keys are: C for Chaotic Commands; V for Death Ward; B for Protection from Fire, Protection from Lightning, and Protection from Magic Energy; Z for a paladin's Protection from Evil.~
+
+@607=~No-melee mode activated~
+@608=~No-melee mode deactivated~
+
+
+@1008=~Quaffs healing potion~
+@1010=~Quaffs potion of invisibility~
+@1052=~Quaffs extra-healing potion~
+@1055=~Quaffs superior healing potion~
+@1034=~Quaffs potion of magic protection~
+@1035=~Quaffs potion of magic shielding~
+@1045=~Quaffs potion of freedom~
+@1014=~Applies oil of speed~
+@1007=~Quaffs potion of storm giant strength~
+@1006=~Quaffs potion of cloud giant strength~
+@1005=~Quaffs potion of fire giant strength~
+@1004=~Quaffs potion of frost giant strength~
+@1012=~Quaffs potion of stone giant strength~
+@1003=~Quaffs potion of hill giant strength~
+@1041=~Quaffs potion of power~
+@1009=~Quaffs potion of heroism~
+@1011=~Quaffs potion of invulnerability~
+@1024=~Quaffs potion of defense~
+@1028=~Quaffs potion of fortitude~
+@1042=~Quaffs potion of regeneration~
+@1017=~Quaffs elixir of health~
+@1020=~Takes antidote~
+@1021=~Quaffs potion of clarity~
+
+@1100=~Temple of Tempus~
+@1101=~Hrothgar's House~
+@1102=~Winter's Cradle Tavern~
+@1103=~Snowdrift Inn~
+@1104=~Pomab's Emporium~
+@1105=~Old Jed's House~
+@1106=~Apsel's House~
+@1107=~Warehouse~
+@1108=~Fishmonger's~
+@1109=~Tower of Orrick the Grey~
+@1110=~Arundel's House~
+@1111=~Gerth's Equipment Shoppe~
+@1112=~Potter's~
+@1113=~Root Cellar Tavern~
+@1114=~Blacksmith's~
+@1115=~Evening Shade Inn~
+@1116=~Barbarian Shaman's Home~
+@1117=~Temple of Ilmater~
+@1118=~Oswald Fiddlebender's Airship~
+@1119=~Tolben's Statue~
+@1120=~Brothers' Cabin~
+@1121=~Cartwright's~
+@1122=~Cooper's~
+@1123=~Boathouse~
+@1124=~Whistling Gallows Inn~
+@1125=~Purvis's Shack~
+@1126=~Shrine of Waukeen~
+@1127=~Bowyer's~
+@1128=~Merchant's Warehouse~
+
+@2000=~The Evening Shade Inn~
+@2001=~A Little Girl in Lonelywood~
+@2002=~Wolf in the Shop~
+@2003=~Convincing Hjollder~
+@2004=~A Shaman's Plea~
+@2005=~Lady of the Lake~
+@2006=~Jhonen's Dreams~
+@2007=~Damien and the Goblins~
+@2008=~Hjollder's Return~
+@2009=~Meeting with Hrothgar~
+@2010=~Prevent the Sacrifices~
+@2011=~Free the Slaves~
+@2012=~Laying the Priests to Rest~
+@2013=~Restoring the Shrine~
+@2014=~Killings in Lonelywood~
+@2015=~The Werewolf of Lonelywood~
+@2016=~Kresselack's Secrets~
+@2017=~The Elven Journal~
+@2018=~A Salamander's Hearing~
+@2019=~Kieran's Secret~
+@2020=~Gareth and the Slaves~
+@2021=~A Missing Caravan~
+@2022=~Kaylessa's Plea~
+@2023=~Mirek's Heirloom~
+@2024=~A Rose of Ice~
+@2025=~Destroying Terikan~
+@2026=~An Ogre in Distress~
+@2027=~Jed's Wine~
+@2028=~Helping Tybald~
+@2029=~Saablic Tam~
+@2030=~Rescuing Sheemish~
+@2031=~Vexing Thoughts~
+@2032=~Traveling to the Barbarian Camp~
+@2033=~Secrets of the Mythal~
+@2034=~Speaking with the Archdruid~
+@2035=~Restore the Arboretum~
+@2036=~A Favour for Kerish~
+
+@3000=~Meeting with Hrothgar
+
+With the supply list delivered to Pomab, nothing now prevents the expedition to Kuldahar from setting off. We should return to Hrothgar and tell him we are ready to depart~
+
+
+
+
+
+
+
+
+@100000 = ~Weapon proficiency choices~
+@100100 = ~Basic NPCs~
+@100200 = ~BG2-style protagonist~
+@100300 = ~Miscellaneous tweaks~
+
+@216000 = ~Rebalanced Proficiencies (CamDawg)~
+@216001 = ~SHORT SWORD/NINJA-TO:  The preferred weapon of many a thief and halfling, short swords and ninja-tos are light but useful weapons.
+
+<DOTS1>
+<DOTS2>
+<DOTS3>
+<DOTS4>
+<DOTS5>~
+@216002 = ~KATANA/WAKIZASHI:  Katanas and wakizashis are the finest examples of the swordsmith's craft, and require great care to use.  As skill develops, the wielder and blade become a single being, dedicated completely to the art of warfare.  These weapons are hard to find Outside of Kara-Tur, so care must be taken when considering this proficiency.  After all, skill with katanas and wakizashis is only helpful if you can find one.
+
+WARNING:  Magical katanas are very rare!
+
+<DOTS1>
+<DOTS2>
+<DOTS3>
+<DOTS4>
+<DOTS5>~
+@216003 = ~SCIMITAR:  This weapon class allows the character to use curved, bladed weapons such as scimitars.
+
+<DOTS1>
+<DOTS2>
+<DOTS3>
+<DOTS4>
+<DOTS5>~
+@216004 = ~FLAIL: Flails are blunt weapons used to knock your enemies senseless.  They are difficult to use but with skill and practice these weapons are very useful.
+
+<DOTS1>
+<DOTS2>
+<DOTS3>
+<DOTS4>
+<DOTS5>~
+@216005 = ~MACE/MORNINGSTAR:  The mace is most often associated with clerics.  It is a powerful blunt weapon, similar to the club, but designed to do more damage. A morningstar is similar to a mace, typically with spikes instead of flanges.
+
+<DOTS1>
+<DOTS2>
+<DOTS3>
+<DOTS4>
+<DOTS5>~
+@216006 = ~Alter Weapon Proficiency System (the bigg)~
+
+@216100 = ~BG-Style Proficiencies with Weapon Styles (safe for old saves)~
+@216151 = ~Great Sword~
+@216152 = ~GREAT SWORDS: This weapon class allows the character to use Two-Handed Swords and Bastard Swords.~
+@216153 = ~Large Sword~
+@216154 = ~LARGE SWORD: This weapon class allows the character to use Broad Swords, Long Swords, and Scimitars.  The Thief is able to take this weapon class, but he is only allowed to use the Long Sword. The Druid is able to select this class, but is limited to Scimitars alone.~
+@216155 = ~Missile Weapons~
+@216156 = ~MISSILE WEAPONS: This weapon class allows the character to use Slings and Darts. Clerics can choose this proficiency but are restricted to Slings alone.~
+
+@216200 = ~BG-Style Proficiencies without Weapon Styles (safe for old saves)~
+
+@216300 = ~BG-Style Proficiencies with Weapon Styles (better, unsafe for old saves)~
+
+@216400 = ~BG-Style Proficiencies without Weapon Styles (better, unsafe for old saves)~
+
+@216500 = ~IWD-Style Proficiencies with Weapon Styles~
+
+@216600 = ~IWD-Style Proficiencies without Weapon Styles~
+
+@300002 = ~Thief~
+@300003 = ~Credits (BG2)~
+@300004 = ~Credits (IWD)~

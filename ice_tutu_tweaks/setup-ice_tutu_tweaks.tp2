@@ -1,0 +1,1276 @@
+BACKUP ~ice_tutu_tweaks/backup~ // location to store files for
+AUTHOR ~www.gibberlings3.net~ // email address displayed if install fails
+
+VERSION ~v8.0~
+README ~ice_tutu_tweaks/readme-ice_tutu_tweaks.html~
+
+AUTO_TRA ~ice_tutu_tweaks/%s~
+
+ALWAYS
+
+OUTER_SET ~iwd_offset~=74100
+OUTER_SPRINT ~scsroot~ ~ice_tutu_tweaks~
+OUTER_SET debug_variable=0
+OUTER_SPRINT workspace ~ice_tutu_tweaks/workspace~
+ACTION_IF !VARIABLE_IS_SET sfo_initialise BEGIN
+   INCLUDE ~%scsroot%/lib/install_sfo.tpa~
+END
+APPEND ~STATE.IDS~ ~0x8010202D STATE_DISABLED~
+UNLESS ~0x8010202D STATE_DISABLED~  /// includes Helpless, Stunned, Panic, Sleeping, Charmed, Feebleminded, Confused
+
+APPEND ~STATE.IDS~ ~0x00000029 STATE_IMMOBILE~
+UNLESS ~0x00000029 STATE_IMMOBILE~  /// includes Helpless, Stunned, Sleeping
+
+APPEND ~STATE.IDS~ ~0x00400010 STATE_NOT_TARGETABLE~
+UNLESS ~0x00400010 STATE_NOT_TARGETABLE~  /// includes Improved Invisibility and plain Invisibility
+
+APPEND ~STATE.IDS~ ~0x00000FC0 STATE_REALLY_DEAD~
+UNLESS ~0x00000FC0 STATE_REALLY_DEAD~
+
+END
+
+LANGUAGE
+  ~English~
+  ~english~
+  ~ice_tutu_tweaks/tra/english/setup.tra~
+
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////                                                  \\\\\
+///// Test space                                       \\\\\
+/////                                                  \\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+
+
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////                                                  \\\\\
+///// Fixes                                            \\\\\
+/////                                                  \\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+
+BEGIN @11 DESIGNATED 10
+
+OUTER_SPRINT component_loc fixpack
+LAF include STR_VAR file=fixpack.tpa END
+
+
+
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////                                                  \\\\\
+///// Altered weapon proficiencies                     \\\\\
+/////                                                  \\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\/////\\\\\
+
+/////                                                  \\\\\
+///// Rebalanced weapon proficiencies                  \\\\\
+/////                                                  \\\\\
+
+BEGIN @216000 DESIGNATED 100 GROUP @100000
+SUBCOMPONENT @216006
+REQUIRE_PREDICATE ((NOT FILE_EXISTS_IN_GAME cdt02160.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02161.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02162.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02163.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02164.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02165.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02166.g3)) ~Already installed~ // prevent double-installation
+
+// this file does nothing, it just allows other mods to detect this component
+COPY_EXISTING ~sw1h01.itm~ ~override/cdt02160.g3~
+
+// animation corrections
+COPY_EXISTING ~misc9q.itm~ ~override~
+  WRITE_ASCII 0x22 "sc" #2
+
+ACTION_IF FILE_EXISTS_IN_GAME ~mel01.cre~ THEN BEGIN // ToB
+
+  COPY_EXISTING ~sw1h66.itm~ ~override~
+    WRITE_ASCII 0x22 "ss" #2
+
+  COPY_EXISTING ~sw1h67.itm~ ~override~
+    WRITE_ASCII 0x22 "s1" #2
+
+  COPY_EXISTING ~sw1h68a.itm~ ~override~
+    WRITE_ASCII 0x22 "sc" #2
+
+END
+
+//item changes
+//PRINT @1
+COPY_EXISTING_REGEXP GLOB ~^.+\.itm$~ ~override~ // item changes
+  PATCH_IF (SOURCE_SIZE > 0x71) THEN BEGIN // protects against invalid files
+    READ_ASCII 0x22 "anim" (2)
+    READ_BYTE  0x31 "prof"
+    PATCH_IF ("%prof%" = 100 AND (("%anim%" STRING_COMPARE_CASE "ms" = 0) OR ("%anim%" STRING_COMPARE_CASE "mc" = 0))) BEGIN // morningstars
+      SET "prof" = 101
+      WRITE_BYTE 0x31 "%prof%" // mace prof
+    END ELSE
+    PATCH_IF (("%prof%" = 95) AND ("%anim%" STRING_COMPARE_CASE "s1" = 0)) BEGIN // ninja-tos
+      SET "prof" = 91
+      WRITE_BYTE 0x31 "%prof%" // short sword prof
+    END ELSE
+    PATCH_IF (("%prof%" = 95) AND ("%anim%" STRING_COMPARE_CASE "ss" = 0)) BEGIN // wakizashis
+      SET "prof" = 94
+      WRITE_BYTE 0x31 "%prof%" // katana prof
+    END
+
+    PATCH_IF ("%LANGUAGE%" STRING_COMPARE_CASE "ENGLISH" = 0) THEN BEGIN // only update descripts if English
+      PATCH_IF ("%prof%" = 101) BEGIN // morningstars/maces
+        READ_LONG UNIDENTIFIED_DESC "valid"
+        PATCH_IF ("%valid%" > 0) BEGIN
+          READ_STRREF UNIDENTIFIED_DESC "description"
+          INNER_PATCH ~%description%~ BEGIN
+            REPLACE_TEXTUALLY ~Proficiency\( Type\)?[:-] *\(\(Flail */ *Morningstar\)\|\(Mace\)\)~ ~Proficiency Type: Mace/Morningstar~
+            SET char = 0 // different than the check
+            FOR (i = 0; char != 0xfafa; i += 1) BEGIN
+              READ_BYTE i char ELSE 0xfafa // if out of bounds, read my custom EOF signal/value
+            END
+            READ_ASCII 0 description (i - 1)
+          END
+          SAY_EVALUATED UNIDENTIFIED_DESC ~%description%~
+        END
+        READ_LONG IDENTIFIED_DESC "valid"
+        PATCH_IF ("%valid%" > 0) BEGIN
+          READ_STRREF IDENTIFIED_DESC "description"
+          INNER_PATCH ~%description%~ BEGIN
+            REPLACE_TEXTUALLY ~Proficiency\( Type\)?[:-] *\(\(Flail */ *Morningstar\)\|\(Mace\)\)~ ~Proficiency Type: Mace/Morningstar~
+            SET char = 0 // different than the check
+            FOR (i = 0; char != 0xfafa; i += 1) BEGIN
+              READ_BYTE i char ELSE 0xfafa // if out of bounds, read my custom EOF signal/value
+            END
+            READ_ASCII 0 description (i - 1)
+          END
+          SAY_EVALUATED IDENTIFIED_DESC ~%description%~
+        END
+      END ELSE
+      PATCH_IF ("%prof%" = 100) BEGIN // flails
+        READ_LONG UNIDENTIFIED_DESC "valid"
+        PATCH_IF ("%valid%" > 0) BEGIN
+          READ_STRREF UNIDENTIFIED_DESC "description"
+          INNER_PATCH ~%description%~ BEGIN
+            REPLACE_TEXTUALLY ~Proficiency\( Type\)?[:-] *Flail */ *Morningstar~ ~Proficiency Type: Flail~
+            SET char = 0 // different than the check
+            FOR (i = 0; char != 0xfafa; i += 1) BEGIN
+              READ_BYTE i char ELSE 0xfafa // if out of bounds, read my custom EOF signal/value
+            END
+            READ_ASCII 0 description (i - 1)
+          END
+          SAY_EVALUATED UNIDENTIFIED_DESC ~%description%~
+        END
+        READ_LONG IDENTIFIED_DESC "valid"
+        PATCH_IF ("%valid%" > 0) BEGIN
+          READ_STRREF IDENTIFIED_DESC "description"
+          INNER_PATCH ~%description%~ BEGIN
+            REPLACE_TEXTUALLY ~Proficiency\( Type\)?[:-] *Flail */ *Morningstar~ ~Proficiency Type: Flail~
+            SET char = 0 // different than the check
+            FOR (i = 0; char != 0xfafa; i += 1) BEGIN
+              READ_BYTE i char ELSE 0xfafa // if out of bounds, read my custom EOF signal/value
+            END
+            READ_ASCII 0 description (i - 1)
+          END
+          SAY_EVALUATED IDENTIFIED_DESC ~%description%~
+        END
+      END ELSE
+      PATCH_IF ("%prof%" = 94) BEGIN // katanas/wakizashis
+        READ_LONG UNIDENTIFIED_DESC "valid"
+        PATCH_IF ("%valid%" > 0) BEGIN
+          READ_STRREF UNIDENTIFIED_DESC "description"
+          INNER_PATCH ~%description%~ BEGIN
+            REPLACE_TEXTUALLY ~Proficiency\( Type\)?[:-] *\(\(Scimitar */ *Wakizashi */ *Ninja-?[Tt]o\)\|\(Katana\)\)~ ~Proficiency Type: Katana/Wakizashi~
+            SET char = 0 // different than the check
+            FOR (i = 0; char != 0xfafa; i += 1) BEGIN
+              READ_BYTE i char ELSE 0xfafa // if out of bounds, read my custom EOF signal/value
+            END
+            READ_ASCII 0 description (i - 1)
+          END
+          SAY_EVALUATED UNIDENTIFIED_DESC ~%description%~
+        END
+        READ_LONG IDENTIFIED_DESC "valid"
+        PATCH_IF ("%valid%" > 0) BEGIN
+          READ_STRREF IDENTIFIED_DESC "description"
+          INNER_PATCH ~%description%~ BEGIN
+            REPLACE_TEXTUALLY ~Proficiency\( Type\)?[:-] *\(\(Scimitar */ *Wakizashi */ *Ninja-?[Tt]o\)\|\(Katana\)\)~ ~Proficiency Type: Katana/Wakizashi~
+            SET char = 0 // different than the check
+            FOR (i = 0; char != 0xfafa; i += 1) BEGIN
+              READ_BYTE i char ELSE 0xfafa // if out of bounds, read my custom EOF signal/value
+            END
+            READ_ASCII 0 description (i - 1)
+          END
+          SAY_EVALUATED IDENTIFIED_DESC ~%description%~
+        END
+      END ELSE
+      PATCH_IF ("%prof%" = 91) BEGIN // short swords/ninja-tos
+        READ_LONG UNIDENTIFIED_DESC "valid"
+        PATCH_IF ("%valid%" > 0) BEGIN
+          READ_STRREF UNIDENTIFIED_DESC "description"
+          INNER_PATCH ~%description%~ BEGIN
+            REPLACE_TEXTUALLY ~Proficiency\( Type\)?[:-] *\(\(Scimitar */ *Wakizashi */ *Ninja-?[Tt]o\)\|\(Short Sword\)\)~ ~Proficiency Type: Short Sword/Ninja-To~
+            SET char = 0 // different than the check
+            FOR (i = 0; char != 0xfafa; i += 1) BEGIN
+              READ_BYTE i char ELSE 0xfafa // if out of bounds, read my custom EOF signal/value
+            END
+            READ_ASCII 0 description (i - 1)
+          END
+          SAY_EVALUATED UNIDENTIFIED_DESC ~%description%~
+        END
+        READ_LONG IDENTIFIED_DESC "valid"
+        PATCH_IF ("%valid%" > 0) BEGIN
+          READ_STRREF IDENTIFIED_DESC "description"
+          INNER_PATCH ~%description%~ BEGIN
+            REPLACE_TEXTUALLY ~Proficiency\( Type\)?[:-] *\(\(Scimitar */ *Wakizashi */ *Ninja-?[Tt]o\)\|\(Short Sword\)\)~ ~Proficiency Type: Short Sword/Ninja-To~
+            SET char = 0 // different than the check
+            FOR (i = 0; char != 0xfafa; i += 1) BEGIN
+              READ_BYTE i char ELSE 0xfafa // if out of bounds, read my custom EOF signal/value
+            END
+            READ_ASCII 0 description (i - 1)
+          END
+          SAY_EVALUATED IDENTIFIED_DESC ~%description%~
+        END
+      END ELSE
+      PATCH_IF ("%prof%" = 95) BEGIN // scimitars
+        READ_LONG UNIDENTIFIED_DESC "valid"
+        PATCH_IF ("%valid%" > 0) BEGIN
+          READ_STRREF UNIDENTIFIED_DESC "description"
+          INNER_PATCH ~%description%~ BEGIN
+            REPLACE_TEXTUALLY ~Proficiency\( Type\)?[:-] *Scimitar */ *Wakizashi */ *Ninja-?[Tt]o~ ~Proficiency Type: Scimitar~
+            SET char = 0 // different than the check
+            FOR (i = 0; char != 0xfafa; i += 1) BEGIN
+              READ_BYTE i char ELSE 0xfafa // if out of bounds, read my custom EOF signal/value
+            END
+            READ_ASCII 0 description (i - 1)
+          END
+          SAY_EVALUATED UNIDENTIFIED_DESC ~%description%~
+        END
+        READ_LONG IDENTIFIED_DESC "valid"
+        PATCH_IF ("%valid%" > 0) BEGIN
+          READ_STRREF IDENTIFIED_DESC "description"
+          INNER_PATCH ~%description%~ BEGIN
+            REPLACE_TEXTUALLY ~Proficiency\( Type\)?[:-] *Scimitar */ *Wakizashi */ *Ninja-?[Tt]o~ ~Proficiency Type: Scimitar~
+            SET char = 0 // different than the check
+            FOR (i = 0; char != 0xfafa; i += 1) BEGIN
+              READ_BYTE i char ELSE 0xfafa // if out of bounds, read my custom EOF signal/value
+            END
+            READ_ASCII 0 description (i - 1)
+          END
+          SAY_EVALUATED IDENTIFIED_DESC ~%description%~
+        END
+      END
+    END
+  END
+  BUT_ONLY_IF_IT_CHANGES
+
+COPY_EXISTING ~weapprof.2da~ ~override~
+  SET_2DA_ENTRY 11 3 51 ~cdssdescript~
+  SET_2DA_ENTRY 14 3 51 ~cdkatdescript~
+  SET_2DA_ENTRY 15 3 51 ~cdscimdescript~
+  SET_2DA_ENTRY 21 3 51 ~cdfldescript~
+  SET_2DA_ENTRY 22 3 51 ~cdmacedescript~
+  REPLACE ~cdssdescript~   @216001
+  REPLACE ~cdkatdescript~  @216002
+  REPLACE ~cdscimdescript~ @216003
+  REPLACE ~cdfldescript~   @216004
+  REPLACE ~cdmacedescript~ @216005
+  BUT_ONLY_IF_IT_CHANGES
+
+// if Maurolava's samurai kit is installed, old version
+// only wants katanas and wakizashis; since they're now combined need to remove scimitars for the kit
+ACTION_IF FILE_EXISTS_IN_GAME ~samurai.2da~ THEN BEGIN
+
+  // find samurai kit in kitlist
+  COPY_EXISTING ~kitlist.2da~ ~override~
+    COUNT_2DA_ROWS ~9~ "rows"
+    FOR ( index = 31 ; index < rows ; index = index + 1 ) BEGIN
+      READ_2DA_ENTRY "%index%" 5 9 "clab"
+      PATCH_IF ("%clab%" STRING_COMPARE_CASE "samurai" = 0) BEGIN
+        SET "samurai" = "%index%"
+        SET "rows" = 0 // kills loop
+      END
+    END
+    BUT_ONLY_IF_IT_CHANGES
+    
+  COPY_EXISTING ~weapprof.2da~ ~override~
+    SET_2DA_ENTRY 14 ("%samurai%" + 22) ("%samurai%" + 23) 1
+    BUT_ONLY_IF_IT_CHANGES
+
+END
+
+// if Maurolava's samurai kit is installed, new version
+// only wants katanas and wakizashis; since they're now combined need to remove scimitars for the kit
+ACTION_IF FILE_EXISTS_IN_GAME ~mlsamura.2da~ THEN BEGIN
+
+  // find samurai kit in kitlist
+  COPY_EXISTING ~kitlist.2da~ ~override~
+    COUNT_2DA_ROWS ~9~ "rows"
+    FOR ( index = 31 ; index < rows ; index = index + 1 ) BEGIN
+      READ_2DA_ENTRY "%index%" 5 9 "clab"
+      PATCH_IF ("%clab%" STRING_COMPARE_CASE "mlsamura" = 0) BEGIN
+        SET "samurai" = "%index%"
+        SET "rows" = 0 // kills loop
+      END
+    END
+    BUT_ONLY_IF_IT_CHANGES
+    
+  COPY_EXISTING ~weapprof.2da~ ~override~
+    SET_2DA_ENTRY 14 ("%samurai%" + 22) ("%samurai%" + 23) 1
+    BUT_ONLY_IF_IT_CHANGES
+
+END
+
+/////                                                  \\\\\
+///// BG Weapon profs with weapon styles (save safe)   \\\\\
+/////                                                  \\\\\
+
+BEGIN @216100 DESIGNATED 101 GROUP @100000
+SUBCOMPONENT @216006
+REQUIRE_PREDICATE ((NOT FILE_EXISTS_IN_GAME cdt02160.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02161.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02162.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02163.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02164.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02165.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02166.g3)) @22 // prevent double-installation
+
+// this file does nothing, it just allows other mods to detect this component
+COPY_EXISTING ~sw1h01.itm~ ~override/cdt02161.g3~
+
+OUTER_SET "tb#tutu_realloc_style" = 0
+OUTER_SET tb#save_compatibility = 1
+INCLUDE ~ice_tutu_tweaks/lib/bg_style_profs.tpa~
+INCLUDE ~ice_tutu_tweaks/lib/restyle_profs.tpa~
+
+/////                                                  \\\\\
+///// BG Weapon profs without weapon styles (save safe)\\\\\
+/////                                                  \\\\\
+
+BEGIN @216200 DESIGNATED 102 GROUP @100000
+SUBCOMPONENT @216006
+REQUIRE_PREDICATE ((NOT FILE_EXISTS_IN_GAME cdt02160.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02161.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02162.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02163.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02164.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02165.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02166.g3)) @22 // prevent double-installation
+
+// this file does nothing, it just allows other mods to detect this component
+COPY_EXISTING ~sw1h01.itm~ ~override/cdt02162.g3~
+
+OUTER_SET "tb#tutu_realloc_style" = 1
+OUTER_SET tb#save_compatibility = 1
+INCLUDE ~ice_tutu_tweaks/lib/bg_style_profs.tpa~
+INCLUDE ~ice_tutu_tweaks/lib/restyle_profs.tpa~
+
+/////                                                  \\\\\
+///// BG Weapon profs with weapon styles (better)      \\\\\
+/////                                                  \\\\\
+
+BEGIN @216300 DESIGNATED 103 GROUP @100000
+SUBCOMPONENT @216006
+REQUIRE_PREDICATE ((NOT FILE_EXISTS_IN_GAME cdt02160.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02161.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02162.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02163.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02164.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02165.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02166.g3)) @22 // prevent double-installation
+
+// this file does nothing, it just allows other mods to detect this component
+COPY_EXISTING ~sw1h01.itm~ ~override/cdt02163.g3~
+
+OUTER_SET "tb#tutu_realloc_style" = 0
+OUTER_SET tb#save_compatibility = 0
+INCLUDE ~ice_tutu_tweaks/lib/bg_style_profs.tpa~
+INCLUDE ~ice_tutu_tweaks/lib/restyle_profs.tpa~
+
+/////                                                  \\\\\
+///// BG Weapon profs without weapon styles (better)   \\\\\
+/////                                                  \\\\\
+
+BEGIN @216400 DESIGNATED 104 GROUP @100000
+SUBCOMPONENT @216006
+REQUIRE_PREDICATE ((NOT FILE_EXISTS_IN_GAME cdt02160.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02161.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02162.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02163.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02164.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02165.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02166.g3)) @22 // prevent double-installation
+
+// this file does nothing, it just allows other mods to detect this component
+COPY_EXISTING ~sw1h01.itm~ ~override/cdt02164.g3~
+
+OUTER_SET "tb#tutu_realloc_style" = 1
+OUTER_SET tb#save_compatibility = 0
+INCLUDE ~ice_tutu_tweaks/lib/bg_style_profs.tpa~
+INCLUDE ~ice_tutu_tweaks/lib/restyle_profs.tpa~
+
+/////                                                  \\\\\
+///// IWD Weapon profs without weapon styles           \\\\\
+/////                                                  \\\\\
+
+BEGIN @216500 DESIGNATED 105 GROUP @100000
+SUBCOMPONENT @216006
+REQUIRE_PREDICATE ((NOT FILE_EXISTS_IN_GAME cdt02160.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02161.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02162.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02163.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02164.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02165.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02166.g3)) @22 // prevent double-installation
+
+// this file does nothing, it just allows other mods to detect this component
+COPY_EXISTING ~sw1h01.itm~ ~override/cdt02165.g3~
+
+OUTER_SET "tb#tutu_realloc_style" = 0
+OUTER_SET tb#save_compatibility = 0
+INCLUDE ~ice_tutu_tweaks/lib/morningstar_to_mace.tpa~
+INCLUDE ~ice_tutu_tweaks/lib/iwd_style_profs.tpa~
+INCLUDE ~ice_tutu_tweaks/lib/restyle_profs.tpa~
+
+/////                                                  \\\\\
+///// IWD Weapon profs without weapon styles           \\\\\
+/////                                                  \\\\\
+
+BEGIN @216600 DESIGNATED 106 GROUP @100000
+SUBCOMPONENT @216006
+REQUIRE_PREDICATE ((NOT FILE_EXISTS_IN_GAME cdt02160.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02161.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02162.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02163.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02164.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02165.g3) AND
+                   (NOT FILE_EXISTS_IN_GAME cdt02166.g3)) @22 // prevent double-installation
+
+// this file does nothing, it just allows other mods to detect this component
+COPY_EXISTING ~sw1h01.itm~ ~override/cdt02166.g3~
+
+OUTER_SET "tb#tutu_realloc_style" = 1
+OUTER_SET tb#save_compatibility = 0
+INCLUDE ~ice_tutu_tweaks/lib/morningstar_to_mace.tpa~
+INCLUDE ~ice_tutu_tweaks/lib/iwd_style_profs.tpa~
+INCLUDE ~ice_tutu_tweaks/lib/restyle_profs.tpa~
+
+BEGIN @16 // remove max-2-stars restriction at L1
+DESIGNATED 200 GROUP @100000
+
+COPY ~tobex_ini/tobextweak.ini~ ~tobex_ini~
+  REPLACE_TEXTUALLY ~Engine:Level One Proficiency Restrictions=1~ ~Engine:Level One Proficiency Restrictions=0~
+
+
+
+BEGIN @1 // install NPCs
+DESIGNATED 1000 GROUP @100100
+
+/// general setup
+
+<<<<<<<< .../ice_tutu_tweaks/portrait.2da
+ 2DA V1.0
+ MAN2S
+            REPLACEMENT
+>>>>>>>>
+
+COPY ~.../ice_tutu_tweaks/portrait.2da~ ~override~
+
+
+// initialise Ilauna's dialog(for CHAIN)
+
+
+COMPILE ~ice_tutu_tweaks/dlg/join_party.d~
+
+// place NPCs in areas
+
+EXTEND_TOP ~ar1000.bcs~ ~ice_tutu_tweaks/bcs/ar1000NPC.baf~
+EXTEND_TOP ~ar1001.bcs~ ~ice_tutu_tweaks/bcs/ar1001NPC.baf~
+EXTEND_TOP ~ar1006.bcs~ ~ice_tutu_tweaks/bcs/ar1006NPC.baf~
+EXTEND_TOP ~ar1008.bcs~ ~ice_tutu_tweaks/bcs/ar1008NPC.baf~
+EXTEND_TOP ~ar1016.bcs~ ~ice_tutu_tweaks/bcs/ar1016NPC.baf~
+EXTEND_TOP ~ar2100.bcs~ ~ice_tutu_tweaks/bcs/ar2100NPC.baf~
+EXTEND_TOP ~ar2103.bcs~ ~ice_tutu_tweaks/bcs/ar2103NPC.baf~
+EXTEND_TOP ~ar2108.bcs~ ~ice_tutu_tweaks/bcs/ar2108NPC.baf~
+EXTEND_TOP ~ar2111.bcs~ ~ice_tutu_tweaks/bcs/ar2111NPC.baf~
+EXTEND_TOP ~ar2114.bcs~ ~ice_tutu_tweaks/bcs/ar2114NPC.baf~
+
+// copy over, modify, and name, CRE files
+
+COPY ~ice_tutu_tweaks/cre/dw#sylee.cre~ ~override~
+    REPLACE_CRE_ITEM chan04 #0 #0 #0 ~NONE~ ~ARMOR~
+    WRITE_BYTE 0x239 38
+    WRITE_BYTE 0x23c 16
+    WRITE_BYTE 0x23d 17
+    SAY 0x8 @100
+    SAY 0xc @200
+    REMOVE_KNOWN_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+    REMOVE_MEMORIZED_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+
+COPY ~ice_tutu_tweaks/cre/dw#ragna.cre~ ~override~
+    REPLACE_CRE_ITEM chan01 #0 #0 #0 ~NONE~ ~ARMOR~
+    WRITE_BYTE 0x238 18
+    WRITE_BYTE 0x239 71
+    WRITE_BYTE 0x23a 9
+    WRITE_BYTE 0x23b 10
+    WRITE_BYTE 0x23c 16
+    WRITE_BYTE 0x23d 18
+    WRITE_BYTE 0x23e 11
+    SAY 0x8 @101
+    SAY 0xc @201
+    WRITE_ASCII 0x248 ~dw#ragna~
+    REMOVE_KNOWN_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+    REMOVE_MEMORIZED_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+
+COPY ~ice_tutu_tweaks/cre/dw#valri.cre~ ~override~
+    WRITE_BYTE 0x23a 10
+    WRITE_BYTE 0x23b 10
+    WRITE_BYTE 0x23c 15
+    WRITE_BYTE 0x23e 14
+    SAY 0x8 @102
+    SAY 0xc @202
+    REMOVE_KNOWN_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+    REMOVE_MEMORIZED_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+
+COPY ~ice_tutu_tweaks/cre/dw#marcu.cre~ ~override~
+    ADD_CRE_ITEM xbow04 #0 #0 #0 ~NONE~ ~WEAPON2~ EQUIP TWOHANDED
+    SAY 0x8 @103
+    SAY 0xc @203
+    REMOVE_KNOWN_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+    REMOVE_MEMORIZED_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+
+COPY ~ice_tutu_tweaks/cre/dw#endri.cre~ ~override~
+    SAY 0x8 @104
+    SAY 0xc @204
+    REMOVE_KNOWN_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+    REMOVE_MEMORIZED_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+
+COPY ~ice_tutu_tweaks/cre/dw#elois.cre~ ~override~
+    SAY 0x8 @105
+    SAY 0xc @205
+    ADD_CRE_ITEM scsnill #0 #0 #0 NONE ~INV~
+    ADD_CRE_ITEM scrl95 #0 #0 #0 NONE ~INV~
+    REMOVE_CRE_ITEM bow05
+    ADD_CRE_ITEM bow05 #0 #0 #0 NONE ~INV~
+    REMOVE_KNOWN_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+    REMOVE_MEMORIZED_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+
+COPY ~ice_tutu_tweaks/cre/dw#morga.cre~ ~override~
+    SAY 0x8 @106
+    SAY 0xc @206
+    REMOVE_KNOWN_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+    REMOVE_MEMORIZED_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+
+COPY ~ice_tutu_tweaks/cre/dw#elyvi.cre~ ~override~
+    SAY 0x8 @107
+    SAY 0xc @207
+    WRITE_BYTE 0x238 16
+    WRITE_BYTE 0x23c 19
+    REMOVE_KNOWN_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+    REMOVE_MEMORIZED_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+
+COPY ~ice_tutu_tweaks/cre/dw#ilaun.cre~ ~override~
+    SAY 0x8 @108
+    SAY 0xc @208
+    REMOVE_KNOWN_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+    REMOVE_MEMORIZED_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+
+COPY ~ice_tutu_tweaks/cre/dw#korif.cre~ ~override~
+    SAY 0x8 @109
+    SAY 0xc @209
+    WRITE_BYTE 0x239 56
+    REMOVE_KNOWN_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+    REMOVE_MEMORIZED_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+
+COPY ~ice_tutu_tweaks/cre/dw#arris.cre~ ~override~
+    SAY 0x8 @110
+    SAY 0xc @210
+    REMOVE_KNOWN_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+    REMOVE_MEMORIZED_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+
+COPY ~ice_tutu_tweaks/cre/dw#moran.cre~ ~override~
+    SAY 0x8 @111
+    SAY 0xc @211
+    REMOVE_KNOWN_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+    REMOVE_MEMORIZED_SPELL spin101 spin102 spin103 spin104 spin105 spin106
+
+LAF check_label STR_VAR label=~i#bg2spells~ RET value=value END
+ACTION_IF !value BEGIN
+              COPY_EXISTING
+                ~dw#endri.cre~ ~override~
+                ~dw#moran.cre~ ~override~
+                ~dw#korif.cre~ ~override~
+                  REMOVE_KNOWN_SPELL ~sppr111~ ~sppr113~
+              BUT_ONLY
+END
+
+<<<<<<<< .../ice_tutu_tweaks/npcmaster.2da
+Name     CREfile     Soundbase      CurrentPortraitM   CurrentPortraitS   ReplacementPortraitM ReplacementPortraitS   Script
+Syleen   dw#sylee    hff_           safanam            safanas            branwem              branwes                wtasight
+Ragnar   dw#ragna    dmf_           nanomenm           nanomens           nkeldorm             nkeldors               wtasight
+Vilmar   dw#valri    hemf_          genmelfm           genmelfs           khalidm              khalids                wtasight
+Marcus   dw#marcu    emt_           njanm              njans              minscm               minscs                 wtarsgt
+Endricane dw#endri   hmc_           quaylem            quayles            ajantism             ajantiss               wtasight
+Eloise   dw#elois    heff_          aloram             aloras             shartelm             shartels               wtarsgt
+Morgana  dw#morga    hfm_           jaheiram           jaheiras           faldornm             faldorns               wtarsgt
+Elyvir   dw#elyvi    hefc_          dynaheim           dynaheis           skiem                skies                  wtasight
+Ilauna   dw#ilaun    efm_           viconiam           viconias           imoenm               imoens                 wtasight
+Kori     dw#korif    dff_           woman2m            woman2s            woman1m              woman1s                wtasight
+Arris    dw#arris    emm_           nminscm              nminscs          tiaxm              tiaxs                    wtarsgt
+Moranir  dw#moran    hamf_          gendwrfm           gendwrfs           edwinm               edwins                 wtasight
+>>>>>>>>
+
+COPY - ~.../ice_tutu_tweaks/npcmaster.2da~ ~override~
+    READ_2DA_ENTRIES_NOW ~npctable~ 1
+    FOR (i=1;i<~%npctable%~;i=i+1) BEGIN
+       READ_2DA_ENTRY_FORMER ~npctable~ i 1 ~crefile~
+       READ_2DA_ENTRY_FORMER ~npctable~ i 2 ~soundbase~
+       READ_2DA_ENTRY_FORMER ~npctable~ i 3 ~oportraitm~
+       READ_2DA_ENTRY_FORMER ~npctable~ i 4 ~oportraits~
+       READ_2DA_ENTRY_FORMER ~npctable~ i 5 ~nportraitm~
+       READ_2DA_ENTRY_FORMER ~npctable~ i 6 ~nportraits~
+       READ_2DA_ENTRY_FORMER ~npctable~ i 7 ~script~
+       INNER_ACTION BEGIN
+
+       // set up sound files
+           ACTION_BASH_FOR ~sounds~ ~%soundbase%.*\.wav~ BEGIN
+                  COPY ~sounds/%BASH_FOR_RES%.wav~ ~override~
+           END
+           COPY ~ice_tutu_tweaks/macro/install_soundset.tph~ ~ice_tutu_tweaks/workspace~ EVALUATE_BUFFER
+           REINCLUDE ~ice_tutu_tweaks/workspace/install_soundset.tph~
+
+           // sort out replacement portraits
+
+           APPEND_OUTER ~override/portrait.2da~ ~%oportraitm% %nportraitm%~
+           APPEND_OUTER ~override/portrait.2da~ ~%oportraits% %nportraits%~
+
+           // work out dlg names
+
+           OUTER_INNER_PATCH_SAVE ~leavedlg~ ~%crefile%~ BEGIN
+              WRITE_ASCII 0x7 ~p~
+           END
+
+           OUTER_INNER_PATCH_SAVE ~joindlg~ ~%crefile%~ BEGIN
+              WRITE_ASCII 0x7 ~j~
+           END
+
+           // script
+           
+           ACTION_IF FILE_EXISTS ~ice_tutu_tweaks/bcs/%crefile%.baf~ THEN BEGIN
+              COMPILE ~ice_tutu_tweaks/bcs/%crefile%.baf~
+           END
+
+           // build pdialog
+
+           APPEND ~pdialog.2da~ ~%crefile% %leavedlg% %joindlg% *** %leavedlg% %joindlg% ***  ***~
+
+           // patch CRE file
+
+           COPY_EXISTING ~%crefile%.cre~ ~override~
+                  LAUNCH_PATCH_MACRO ~install_soundset~
+                  WRITE_LONG 0x10 0
+                  WRITE_ASCIIE 0x280 ~%crefile%~
+                  WRITE_ASCIIE 0x248 ~%crefile%~ #8
+                  WRITE_ASCIIE 0x250 ~%script%~ #8
+                  WRITE_ASCIIE 0x268 ~~ #8
+                  WRITE_ASCIIE 0x2cc ~%crefile%~
+                  WRITE_BYTE 0x270 128
+           BUT_ONLY
+
+       END
+    END
+BUT_ONLY
+
+
+
+// other ad hoc stuff
+
+// DV for ogre in AR1201
+
+COPY_EXISTING ~ecogre.cre~ ~override~
+   WRITE_ASCII 0x280 ~ecogre~
+   
+// DV for dead Erevain
+
+COPY_EXISTING ~erevdead.cre~ ~override~
+   WRITE_ASCII 0x280 ~dw#erevd~
+   
+// extra script block for ar4001
+
+EXTEND_TOP ~ar4001.bcs~ ~ice_tutu_tweaks/bcs/ar4001add.baf~
+
+// Erevain burial cutscene
+
+COMPILE ~ice_tutu_tweaks/bcs/dw#erev.baf~
+
+// Ilauna arrival cutscene
+
+COMPILE ~ice_tutu_tweaks/bcs/dw#orila.baf~
+
+// Orrick script addition
+
+EXTEND_TOP ~kuorrick.bcs~ ~ice_tutu_tweaks/bcs/orrickadd.baf~
+
+BEGIN @12 DESIGNATED 1010 GROUP @100100
+REQUIRE_PREDICATE (FILE_EXISTS_IN_GAME ~dw#sylee.cre~) @23
+
+ACTION_FOR_EACH soundset IN
+~hff_~ ~dmf_~ ~hemf_~ ~emt_~ ~hmc_~ ~hefc_~ ~efm_~ ~dff_~ ~emm_~ ~hamf_~ BEGIN
+       ACTION_FOR_EACH ~endcode~ IN 0 1 2 3 4 5 6 7 8 9  a b c d e f g h i j k l m n o p q r s t u v w x y z ~#~ ~'~ ~ ~ ~_~ ~!~
+       BEGIN
+          ACTION_IF FILE_EXISTS ~sounds/%soundset%%endcode%.wav~ BEGIN
+             MOVE ~sounds/%soundset%%endcode%.wav~ ~ice_tutu_tweaks/workspace~
+          END
+       END
+END
+
+BEGIN @15 DESIGNATED 1020 GROUP @100100
+REQUIRE_PREDICATE (FILE_EXISTS_IN_GAME ~dw#sylee.cre~) @23
+
+// fix a few strings
+
+ACTION_GET_STRREF 101064 ~temp~
+OUTER_INNER_PATCH_SAVE ~temp2~ ~%temp%~ BEGIN
+   REPLACE_TEXTUALLY ~<GABBER>~ ~Morgana~
+END
+STRING_SET_EVALUATE 101064 ~%temp2%~
+
+ACTION_GET_STRREF 86737 ~temp~
+STRING_SET_EVALUATE 87996 ~%temp%~
+
+ACTION_GET_STRREF 86738 ~temp~
+STRING_SET_EVALUATE 87997 ~%temp%~
+
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY ~NPC_DV_map~ BEGIN
+Syleen =>  dw#sylee
+Ragnar =>  dw#ragna
+Vilmar =>  dw#valri
+Marcus =>  dw#marcu
+Endricane => dw#endri
+Eloise =>  dw#elois
+Morgana => dw#morga
+Elyvir  => dw#elyvi
+Ilauna  => dw#ilaun
+Kori  =>   dw#korif
+Arris =>   dw#arris
+Moranir => dw#moran
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY ~NPC_dialog_map~ BEGIN
+Syleen =>  dw#sylej
+Ragnar =>  dw#ragnj
+Vilmar =>  dw#valrj
+Marcus =>  dw#marcj
+Endricane => dw#endrj
+Eloise =>  dw#eloij
+Morgana => dw#morgj
+Elyvir  => dw#elyvj
+Ilauna  => dw#ilauj
+Kori  =>   dw#korij
+Arris =>   dw#arrij
+Moranir => dw#moraj
+END
+
+<<<<<<<< new_dlg.d
+BEGIN %npc_dialog%
+>>>>>>>>
+
+<<<<<<<< interject_class.d
+INTERJECT %dialog% %block% dw#interject%string%
+   == %npc_dialog% IF ~IsValidForPartyDialog("%npc_DV%")~ THEN
+   #%string%
+%action_string%
+END
+%dialog% %target%
+
+REPLACE_TRANS_TRIGGER %dialog% BEGIN %block% END BEGIN END ~Class(LastTalkedToBy,%class%)~ ~False()~
+REPLACE_TRANS_TRIGGER %dialog% BEGIN %block% END BEGIN END ~Class(Protagonist,%class%)~ ~False()~
+>>>>>>>>
+
+COPY - ~ice_tutu_tweaks/lib/interject_class.2da~ ~override~
+   READ_2DA_ENTRIES_NOW interject_class 0
+   FOR (i=1;i<~interject_class~;i=i+1) BEGIN
+        READ_2DA_ENTRY_FORMER ~interject_class~ i 0 ~dialog~
+        READ_2DA_ENTRY_FORMER ~interject_class~ i 1 ~class~
+        READ_2DA_ENTRY_FORMER ~interject_class~ i 2 ~npc~
+        READ_2DA_ENTRY_FORMER ~interject_class~ i 3 ~block~
+        READ_2DA_ENTRY_FORMER ~interject_class~ i 4 ~target~
+        READ_2DA_ENTRY_FORMER ~interject_class~ i 5 ~string~
+        READ_2DA_ENTRY_FORMER ~interject_class~ i 6 ~action~
+        READ_2DA_ENTRY_FORMER ~interject_class~ i 7 ~journal~
+        SPRINT ~npc_dialog~ $NPC_dialog_map(~%npc%~)
+        SPRINT ~npc_DV~ $NPC_DV_map(~%npc%~)
+        SPRINT ~action_string~ ~~
+        PATCH_IF ~%action%~ STRING_COMPARE_CASE ~-~ BEGIN
+           SPRINT ~action_string~ ~%action%~
+        END
+        PATCH_IF ~%journal%~ STRING_COMPARE_CASE ~-~ BEGIN
+           SPRINT ~action_string~ ~%action_string%~^~AddJournalEntry(%journal%,QUEST)~
+        END
+        PATCH_IF ~%action_string%~ STRING_COMPARE_CASE ~~ BEGIN
+           SPRINT ~action_string~ "DO ~%action_string%~"
+        END
+        INNER_ACTION BEGIN
+            ACTION_IF !FILE_EXISTS_IN_GAME ~%npc_dialog%.dlg~ BEGIN
+               COMPILE EVALUATE_BUFFER ~new_dlg.d~
+            END
+            COMPILE EVALUATE_BUFFER ~interject_class.d~
+        END
+   END
+
+<<<<<<<< interject_race.d
+INTERJECT %dialog% %block% dw#interject%string%
+   == %npc_dialog% IF ~IsValidForPartyDialog("%npc_DV%")~ THEN
+   #%string%
+%action_string%
+END
+%dialog% %target%
+
+REPLACE_TRANS_TRIGGER %dialog% BEGIN %block% END BEGIN END ~Race(LastTalkedToBy,%class%)~ ~False()~
+REPLACE_TRANS_TRIGGER %dialog% BEGIN %block% END BEGIN END ~Race(Protagonist,%class%)~ ~False()~
+>>>>>>>>
+
+COPY - ~ice_tutu_tweaks/lib/interject_race.2da~ ~override~
+   READ_2DA_ENTRIES_NOW interject_race 0
+   FOR (i=1;i<~interject_race~;i=i+1) BEGIN
+        READ_2DA_ENTRY_FORMER ~interject_race~ i 0 ~dialog~
+        READ_2DA_ENTRY_FORMER ~interject_race~ i 1 ~class~
+        READ_2DA_ENTRY_FORMER ~interject_race~ i 2 ~npc~
+        READ_2DA_ENTRY_FORMER ~interject_race~ i 3 ~block~
+        READ_2DA_ENTRY_FORMER ~interject_race~ i 4 ~target~
+        READ_2DA_ENTRY_FORMER ~interject_race~ i 5 ~string~
+        READ_2DA_ENTRY_FORMER ~interject_race~ i 6 ~action~
+        READ_2DA_ENTRY_FORMER ~interject_race~ i 7 ~journal~
+        SPRINT ~npc_dialog~ $NPC_dialog_map(~%npc%~)
+        SPRINT ~npc_DV~ $NPC_DV_map(~%npc%~)
+        SPRINT ~action_string~ ~~
+        PATCH_IF ~%action%~ STRING_COMPARE_CASE ~-~ BEGIN
+           SPRINT ~action_string~ ~%action%~
+        END
+        PATCH_IF ~%journal%~ STRING_COMPARE_CASE ~-~ BEGIN
+           SPRINT ~action_string~ ~%action_string%~^~AddJournalEntry(%journal%,QUEST)~
+        END
+        PATCH_IF ~%action_string%~ STRING_COMPARE_CASE ~~ BEGIN
+           SPRINT ~action_string~ "DO ~%action_string%~"
+        END
+        INNER_ACTION BEGIN
+            ACTION_IF !FILE_EXISTS_IN_GAME ~%npc_dialog%.dlg~ BEGIN
+               COMPILE EVALUATE_BUFFER ~new_dlg.d~
+            END
+            COMPILE EVALUATE_BUFFER ~interject_race.d~
+        END
+   END
+
+<<<<<<<< interject_misc.d
+INTERJECT %dialog% %block% dw#interject%string%
+   == %npc_dialog% IF ~IsValidForPartyDialog("%npc_DV%")~ THEN
+   #%string%
+%action_string%
+END
+%dialog% %target%
+
+REPLACE_TRANS_TRIGGER %dialog% BEGIN %block% END BEGIN END ~%replace%~ ~False()~
+REPLACE_TRANS_TRIGGER %dialog% BEGIN %block% END BEGIN END ~%replace_variant%~ ~False()~
+>>>>>>>>
+
+COPY - ~ice_tutu_tweaks/lib/interject_misc.2da~ ~override~
+   READ_2DA_ENTRIES_NOW interject_misc 0
+   FOR (i=1;i<~interject_misc~;i=i+1) BEGIN
+        READ_2DA_ENTRY_FORMER ~interject_misc~ i 0 ~dialog~
+        READ_2DA_ENTRY_FORMER ~interject_misc~ i 1 ~replace~
+        READ_2DA_ENTRY_FORMER ~interject_misc~ i 2 ~npc~
+        READ_2DA_ENTRY_FORMER ~interject_misc~ i 3 ~block~
+        READ_2DA_ENTRY_FORMER ~interject_misc~ i 4 ~target~
+        READ_2DA_ENTRY_FORMER ~interject_misc~ i 5 ~string~
+        READ_2DA_ENTRY_FORMER ~interject_misc~ i 6 ~action~
+        READ_2DA_ENTRY_FORMER ~interject_misc~ i 7 ~journal~
+        INNER_PATCH_SAVE ~replace_variant~ ~%replace%~ BEGIN
+           REPLACE_TEXTUALLY ~LastTalkedToBy~ ~Protagonist~
+        END
+        SPRINT ~npc_dialog~ $NPC_dialog_map(~%npc%~)
+        SPRINT ~npc_DV~ $NPC_DV_map(~%npc%~)
+        SPRINT ~action_string~ ~~
+        PATCH_IF ~%action%~ STRING_COMPARE_CASE ~-~ BEGIN
+           SPRINT ~action_string~ ~%action%~
+        END
+        PATCH_IF ~%journal%~ STRING_COMPARE_CASE ~-~ BEGIN
+           SPRINT ~action_string~ ~%action_string%~^~AddJournalEntry(%journal%,QUEST)~
+        END
+        PATCH_IF ~%action_string%~ STRING_COMPARE_CASE ~~ BEGIN
+           SPRINT ~action_string~ "DO ~%action_string%~"
+        END
+        INNER_ACTION BEGIN
+            ACTION_IF !FILE_EXISTS_IN_GAME ~%npc_dialog%.dlg~ BEGIN
+               COMPILE EVALUATE_BUFFER ~new_dlg.d~
+            END
+            COMPILE EVALUATE_BUFFER ~interject_misc.d~
+        END
+   END
+
+// extra
+
+COPY_EXISTING ~dundlt2.dlg~ ~override~
+   DECOMPILE_AND_PATCH BEGIN
+      REPLACE_TEXTUALLY ~Class(LastTalkedToBy,PALADIN_ALL)~ ~IsValidForPartyDialog("dw#sylee")~
+      REPLACE_TEXTUALLY ~Class(LastTalkedToBy,MAGE_ALL)~ ~IsValidForPartyDialog("dw#arris")!IsValidForPartyDialog("dw#sylee")~
+   END
+
+BEGIN @13 GROUP @100200 DESIGNATED 2000 // end game when Player1 dies
+
+COPY ~TobEx_ini/TobExTweak.ini~ ~TobEx_ini~
+      REPLACE_TEXTUALLY ~Engine:Disable End On Player1 Dead=1~ ~Engine:Disable End On Player1 Dead=0~
+      
+BEGIN @14 GROUP @100200 DESIGNATED 2010 // Protagonist replacement
+
+// change protagonist checks to speaker
+COPY_EXISTING ~daccalia.dlg~ ~override~
+              ~dalbion.dlg~  ~override~
+              ~daldwin.dlg~  ~override~
+              ~dambere.dlg~  ~override~
+              ~damelia.dlg~  ~override~
+              ~dangaar.dlg~  ~override~
+              ~dapsel.dlg~   ~override~
+              ~darden.dlg~   ~override~
+              ~darundel.dlg~ ~override~
+              ~dbaldemr.dlg~ ~override~
+              ~dbandoth.dlg~ ~override~
+              ~dbeorn.dlg~   ~override~
+              ~dcallard.dlg~ ~override~
+              ~dcallian.dlg~ ~override~
+              ~dchalp.dlg~   ~override~
+              ~dchals.dlg~   ~override~
+              ~dchalw.dlg~   ~override~
+              ~dconlan.dlg~  ~override~
+              ~dcusthan.dlg~ ~override~
+              ~ddenaini.dlg~ ~override~
+              ~ddigby.dlg~   ~override~
+              ~ddirtyll.dlg~ ~override~
+              ~ddoogal.dlg~  ~override~
+              ~dedion.dlg~   ~override~
+              ~degenia.dlg~  ~override~
+              ~dehealer.dlg~ ~override~
+              ~delibrar.dlg~ ~override~
+              ~delisia.dlg~  ~override~
+              ~demmrch.dlg~  ~override~
+              ~derevain.dlg~ ~override~
+              ~deverard.dlg~ ~override~
+              ~dfalsear.dlg~ ~override~
+              ~dfengla.dlg~  ~override~
+              ~dferg.dlg~    ~override~
+              ~dfgg.dlg~     ~override~
+              ~dflozem.dlg~  ~override~
+              ~dgareth.dlg~  ~override~
+              ~dgerth.dlg~   ~override~
+              ~dgina2.dlg~   ~override~
+              ~dginafae.dlg~ ~override~
+              ~dgoblinc.dlg~ ~override~
+              ~dgrisell.dlg~ ~override~
+              ~dguello.dlg~  ~override~
+              ~dhailee.dlg~  ~override~
+              ~dharken.dlg~  ~override~
+              ~dharpy.dlg~   ~override~
+              ~dhildrth.dlg~ ~override~
+              ~dhjollde.dlg~ ~override~
+              ~dhobart.dlg~  ~override~
+              ~dhroth.dlg~   ~override~
+              ~dicasa.dlg~   ~override~
+              ~dilmadia.dlg~ ~override~
+              ~djermsy.dlg~  ~override~
+              ~djhonen.dlg~  ~override~
+              ~djoril.dlg~   ~override~
+              ~djorn.dlg~    ~override~
+              ~dkerish.dlg~  ~override~
+              ~dkieran.dlg~  ~override~
+              ~dkieran2.dlg~ ~override~
+              ~dkutowng.dlg~ ~override~
+              ~dlehland.dlg~ ~override~
+              ~dlysanpr.dlg~ ~override~
+              ~dmalasim.dlg~ ~override~
+              ~dmarketh.dlg~ ~override~
+              ~dmirek.dlg~   ~override~
+              ~dmurdaug.dlg~ ~override~
+              ~dmytos.dlg~   ~override~
+              ~dnorl.dlg~    ~override~
+              ~dnorlino.dlg~ ~override~
+              ~dnym.dlg~     ~override~
+              ~dogre.dlg~    ~override~
+              ~doldjed.dlg~  ~override~
+              ~dorcchie.dlg~ ~override~
+              ~dorrick.dlg~  ~override~
+              ~doswald.dlg~  ~override~
+              ~dperdiem.dlg~ ~override~
+              ~dpomab.dlg~   ~override~
+              ~dpomend.dlg~  ~override~
+              ~dquimby.dlg~  ~override~
+              ~dquinn.dlg~   ~override~
+              ~drawl.dlg~    ~override~
+              ~dredtoe.dlg~  ~override~
+              ~drikasha.dlg~ ~override~
+              ~dseer.dlg~    ~override~
+              ~dseth.dlg~    ~override~
+              ~dsheemis.dlg~ ~override~
+              ~dsoth.dlg~    ~override~
+              ~dtest.dlg~    ~override~
+              ~dthom.dlg~    ~override~
+              ~dtiernon.dlg~ ~override~
+              ~dtiersto.dlg~ ~override~
+              ~dtowngen.dlg~ ~override~
+              ~dtybald.dlg~  ~override~
+              ~dundlt1.dlg~  ~override~
+              ~dundlt2.dlg~  ~override~
+              ~dvaargln.dlg~ ~override~
+              ~dvexing.dlg~  ~override~
+              ~dvoiceda.dlg~ ~override~
+              ~dweenog.dlg~  ~override~
+              ~dwhitcom.dlg~ ~override~
+              ~dwinona.dlg~  ~override~
+              ~dwylf.dlg~    ~override~
+              ~dxactile.dlg~ ~override~
+              ~dyxun.dlg~    ~override~
+  DECOMPILE_DLG_TO_D
+    REPLACE_TEXTUALLY ~LastTalkedToBy~  ~Protagonist~
+  COMPILE_D_TO_DLG
+  BUT_ONLY_IF_IT_CHANGES
+
+
+BEGIN @5 GROUP @100300 DESIGNATED 3000 DEPRECATED ~This component is out of date and is messing up test runs~// Always hardest spawns
+
+<<<<<<<< .../ice/dw#blank.baf
+>>>>>>>>
+
+<<<<<<<< .../ice/dw#del.baf
+IF
+  !See([PC])
+THEN
+    RESPONSE #100
+             DestroySelf()
+END
+>>>>>>>>
+
+COMPILE ~.../ice/dw#blank.baf~
+COMPILE ~.../ice/dw#del.baf~
+
+ACTION_FOR_EACH ~script~ IN
+~efdela~ ~efdeldef~ ~efdeleas~ ~efdelhrd~ ~efdelnor~
+BEGIN
+   COPY_EXISTING ~dw#blank.bcs~ ~override/%script%.bcs~
+END
+
+ACTION_FOR_EACH ~script~ IN
+~efdelins~
+BEGIN
+   COPY_EXISTING ~dw#del.bcs~ ~override/%script%.bcs~
+END
+
+COPY_EXISTING ~ar1105.bcs~ ~override~
+   DECOMPILE_BCS_TO_BAF
+   REPLACE_TEXTUALLY ~DifficultyLT(Hardest)~ ~False()~
+   COMPILE_BAF_TO_BCS
+
+COPY_EXISTING ~efatksa.bcs~ ~override~
+   DECOMPILE_BCS_TO_BAF
+   REPLACE_TEXTUALLY ~EFATKS[0-9]0~ ~EFATKS00~
+   COMPILE_BAF_TO_BCS
+
+COPY_EXISTING ~ilgemu.bcs~ ~override~
+   DECOMPILE_BCS_TO_BAF
+   REPLACE_TEXTUALLY ~Difficulty(NORMAL)~ ~True()~
+   COMPILE_BAF_TO_BCS
+
+
+BEGIN @6 DESIGNATED 3010 GROUP @100300 // map notes in towns
+
+/*
+Color key stolen from BG2_Tweaks
+Gray    - Caves & Dungeon Entrances
+Violet  - Inns & Taverns
+Green   - Temples
+Orange  - Info points
+Red     - Open space locations (i.e. city squares)
+Blue    - Buildings of note
+Dk Blue - People
+Lt Gray - Stores
+*/
+
+
+COPY_EXISTING ~ar1000.are~ ~override~ //easthaven
+  ADD_MAP_NOTE #3050 #224 ~violet~ @1102
+  ADD_MAP_NOTE #3552 #416 ~lightgray~ @1104
+  ADD_MAP_NOTE #3392 #1077 ~violet~ @1103
+  ADD_MAP_NOTE #448 #330 ~green~ @1100
+  ADD_MAP_NOTE #1002 #2090 ~blue~ @1107
+  ADD_MAP_NOTE #1002 #1546 ~blue~ @1106
+  ADD_MAP_NOTE #2080 #1184 ~blue~ @1105
+  ADD_MAP_NOTE #1973 #202 ~blue~ @1101
+  ADD_MAP_NOTE #2463 #391 ~blue~ @1108
+
+COPY_EXISTING ~ar2100.are~ ~override~ // kuldahar
+  ADD_MAP_NOTE #358 #666 ~lightgray~ @1109 // Orrick's tower
+  ADD_MAP_NOTE #1381 #1972 ~blue~ @1110 // Arundel's House
+  ADD_MAP_NOTE #1063 #1787 ~lightgray~ @1111 // Gerth's Equipment Shoppe
+  ADD_MAP_NOTE #1961 #1539 ~blue~ @1112 // Potter's
+  ADD_MAP_NOTE #2033 #749 ~violet~ @1113 // Root Cellar Tavern
+  ADD_MAP_NOTE #1555 #369 ~lightgray~ @1114 // Blacksmith's
+  ADD_MAP_NOTE #1161 #552 ~violet~ @1115 // Evening Shade Inn
+  ADD_MAP_NOTE #2731 #1245 ~blue~ @1116 // Barbarian Shaman's House
+  ADD_MAP_NOTE #2845 #663 ~green~ @1117 // Temple of Ilmater
+  ADD_MAP_NOTE #3156 #321 ~lightgray~ @1118 // Flying Ship
+  ADD_MAP_NOTE #2475 #1754 ~red~ @1119 // Tolben's Statue
+
+COPY_EXISTING ~ar9100.are~ ~override~ // lonelywood
+  ADD_MAP_NOTE #450 #335 ~blue~ @1120 // Brothers' Cabin
+  ADD_MAP_NOTE #1525 #475 ~blue~ @1121 // Cartwright's
+  ADD_MAP_NOTE #2933 #357 ~blue~ @1122 // Cooper's
+  ADD_MAP_NOTE #873 #1403 ~blue~ @1123 // Boathouse
+  ADD_MAP_NOTE #1937 #1202 ~violet~ @1124 // Whistling Gallows Inn
+  ADD_MAP_NOTE #3387 #1250 ~blue~ @1125 // Purvis's Shack
+  ADD_MAP_NOTE #2477 #1721 ~green~ @1126 // Shrine of Waukeen
+  ADD_MAP_NOTE #3193 #2157 ~blue~ @1127 // Bowyer's
+  ADD_MAP_NOTE #2181 #2510 ~blue~ @1128 // Merchant's Warehouse
+
+
+
+
+
+
+
+
+<<<<<<<< .../ice/reveal.baf
+IF
+  !Global("dw#reveal","MYAREA",1)
+THEN
+    RESPONSE #100
+             SetGlobal("dw#reveal","MYAREA",1)
+             Explore()
+             Continue()
+END
+>>>>>>>>
+
+EXTEND_TOP ~ar1000.bcs~ ~.../ice/reveal.baf~
+EXTEND_TOP ~ar2100.bcs~ ~.../ice/reveal.baf~
+EXTEND_TOP ~ar9100.bcs~ ~.../ice/reveal.baf~
+
+BEGIN @7 DESIGNATED 3020 GROUP @100300 // HoW accessible at 1st level
+
+COPY_EXISTING ~dhjollde.dlg~ ~override~
+    DECOMPILE_DLG_TO_D
+    REPLACE_TEXTUALLY ~LevelPartyGT(8)~ ~True()~
+    COMPILE_D_TO_DLG
+
+
+
+BEGIN @8 DESIGNATED 3030 GROUP @100300 // restore all  BG2 spells, and make scrolls available
+LAF make_label STR_VAR label=~i#bg2spells~ END
+
+      COPY_EXISTING_REGEXP GLOB ~.*\.itm~ ~override~
+          PATCH_IF ~SOURCE_SIZE~ >0x71 BEGIN
+
+              READ_SHORT 0x1c ~type~
+              PATCH_IF ~type~=11 BEGIN // only check scrolls
+                       GET_OFFSET_ARRAY ab_array 0x64 4 0x68 2 0 0 0x38
+                       PHP_EACH ab_array AS int => ab_off BEGIN
+                                CLEAR_ARRAY fx_array
+                                GET_OFFSET_ARRAY2 fx_array ab_off ITM_V10_HEAD_EFFECTS
+                                PHP_EACH fx_array AS int => fx_off BEGIN
+                                         READ_SHORT fx_off fx_type
+                                         PATCH_IF fx_type = 147 BEGIN
+                                             READ_ASCII fx_off + 0x14 spell
+                                             TO_LOWER ~spell~
+                                             SPRINT $scrollmap(~%spell%~) ~%SOURCE_RES%~
+                                         END
+                                END
+                       END
+              END
+          END
+      BUT_ONLY
+
+ACTION_FOR_EACH ~magespell~ IN
+120 123 125
+220 221 223 224
+301 302 307 318 319 320 321 322 324 325
+403 409 415 416 417 418 419 420 421 423 424 425
+505 510 511 512 513 515 517 518 519 520 522
+606 607 608 609 611 613 617 618 619 620 621 622 623 624
+701 702 703 704 705 707 708 710 711 712 717 718 719 720 722
+803 804 805 807 808 809 811 813 816 817 818 // not odd Spell Deflection (802)
+902 903 905 907 908 909 910 911 913 914 915 916 917 918 919
+BEGIN
+     OUTER_SET ~level~=~magespell~ / 100
+     COPY_EXISTING ~hidespl.2da~ ~override~
+        REPLACE_TEXTUALLY CASE_INSENSITIVE ~SPWI%magespell%[ ]+[\*]+~ ~~
+     BUT_ONLY
+     ACTION_IF ~level~=1 OR ~level~=2 BEGIN
+         OUTER_SPRINT ~store~ ~kuork1~
+         OUTER_SPRINT ~after~ ~spwi223a~
+     END
+     ACTION_IF ~level~=3 OR ~level~=4 BEGIN
+         OUTER_SPRINT ~store~ ~kuork2~
+         OUTER_SPRINT ~after~ ~spwi517x~
+     END
+     ACTION_IF ~level~=5 OR ~level~=6 BEGIN
+         OUTER_SPRINT ~store~ ~kuork3~
+         OUTER_SPRINT ~after~ ~scstor~
+     END
+     ACTION_IF ~level~>6 BEGIN
+        RANDOM_SEED 3.14
+        OUTER_SET ~randnum~=RANDOM (1 4)
+        ACTION_IF ~randnum~=1 BEGIN
+            OUTER_SPRINT ~store~ ~edion~
+            OUTER_SPRINT ~after~ ~spwi808x~
+        END
+        ACTION_IF ~randnum~=2 BEGIN
+            OUTER_SPRINT ~store~ ~bandoth~
+            OUTER_SPRINT ~after~ ~scssha~
+        END
+        ACTION_IF ~randnum~=3 BEGIN
+            OUTER_SPRINT ~store~ ~ldd_nym~
+            OUTER_SPRINT ~after~ ~scprism~
+        END
+        ACTION_IF ~randnum~=4 BEGIN
+            OUTER_SPRINT ~store~ ~kieran2~
+            OUTER_SPRINT ~after~ ~spwi805x~
+        END
+     END
+     OUTER_SPRINT ~file~ ~spwi%magespell%~
+     OUTER_SPRINT ~scroll~ $scrollmap(EVALUATE_BUFFER ~%file%~)
+     COPY_EXISTING ~%store%.sto~ ~override~
+         ADD_STORE_ITEM ~%scroll%~ AFTER ~%after%~ #0 #0 #0 ~IDENTIFIED~ #2
+END
+
+ACTION_FOR_EACH ~priestspell~ IN
+111 113 315 318 319 409 410 412 413 415 417 505 506
+513 514 515 516 601 604 609 610 611 612 613 701 703
+704 706 708 711 713 718 719
+BEGIN
+     COPY_EXISTING ~hidespl.2da~ ~override~
+        REPLACE_TEXTUALLY CASE_INSENSITIVE ~SPPR%priestspell%[ ]+[\*]+~ ~~
+     BUT_ONLY
+END
+
+COPY_EXISTING ~splsrckn.2da~ ~override~
+      FOR (i=20;i<25;i=i+1) BEGIN
+         SET_2DA_ENTRY i 9 9 3
+      END
+      FOR (i=25;i<36;i=i+1) BEGIN
+         SET_2DA_ENTRY i 9 9 4
+      END
+      FOR (i=36;i<41;i=i+1) BEGIN
+         SET_2DA_ENTRY i 9 9 5
+      END
+      
+COPY_EXISTING ~tobex_ini/tobexcore.ini~ ~tobex_ini~ 
+   REPLACE_TEXTUALLY ~Scrollable Mage Spellbook=0~ ~Scrollable Mage Spellbook=1~
+   REPLACE_TEXTUALLY ~Scrollable Priest Spellbook=0~ ~Scrollable Priest Spellbook=1~
+
+BEGIN @9 DESIGNATED 3040 GROUP @100300  // never lose access to Orrick the Grey's trade goods
+
+COMPILE ~ice_tutu_tweaks\dlg\orrickadd.d~
+
+BEGIN @17 DESIGNATED 3050 GROUP @100300 // BG2-style journal
+
+
+INCLUDE ~ice_tutu_tweaks/lib/journal_entries.tpa~
+LAM ~journal_data~
+LAF journal_edit_dlg END
+LAF residual_journal_hacks END

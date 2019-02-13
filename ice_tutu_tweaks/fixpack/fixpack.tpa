@@ -1,0 +1,60 @@
+// v8.0 - last-minute finds
+
+///////////////////////////////////////////////////////////////////////////////////
+// remove Slayer Change power from Player1 in a HoW game
+///////////////////////////////////////////////////////////////////////////////////
+
+// make the spell
+
+MAKE_PATCH
+   patch_cond_inline=>~type=>effect match=>resource check=>spin101 resource=>spin822~
+   patch_cond_inline'=>~type=>effect match=>resource check=>spin102 opcode=>999~
+   patch_cond_inline''=>~type=>effect match=>resource check=>spin103 opcode=>999~
+   patch_cond_inline'''=>~type=>effect match=>resource check=>spin104 opcode=>999~
+   patch_cond_inline''''=>~type=>effect match=>resource check=>spin105 opcode=>999~
+   patch_cond_inline'''''=>~type=>effect match=>resource check=>spin106 opcode=>999~
+   delete_opcodes=>999
+END
+LAF clone_spell STR_VAR spell=~jpremove=>#slremov~ edits=patch_data END
+
+<<<<<<<< .../stratagems-inline/ar9100add.baf
+     IF
+       NextTriggerObject(Player1)    // ToB tries to put it back when you reload in area AR9100!
+       HaveSpellRES("spin822")
+     THEN
+         RESPONSE #100
+                  ApplySpellRES("#slremov",Player1)
+                  Continue()
+     END
+>>>>>>>>
+
+LAF extend_area_script STR_VAR area=ar9100 top=ar9100add inline=yes END
+
+///////////////////////////////////////////////////////////////////////////////////
+// ensure both lots of credits play
+//
+// (yes, no player will care, but it's professional courtesy to the developers)
+///////////////////////////////////////////////////////////////////////////////////
+
+STRING_SET_EVALUATE 15591 @300003
+OUTER_SPRINT string @300004
+LAF add_to_tlk STR_VAR string RET strref=strref END
+APPEND movidesc.2da ~ECREDIT %strref%~
+
+COPY_EXISTING ~baldur.ini~ ~baldur.ini~
+   REPLACE_TEXTUALLY ~ECREDIT=1~ ~~
+   COUNT_2DA_ROWS 0 rowcount
+   FOR (i=0;i<rowcount;i+=1) BEGIN
+      SET insert_point=1
+      READ_2DA_ENTRY i 0 0 entry
+      PATCH_IF ~%entry%~ STRING_EQUAL ~[MOVIES]~ BEGIN
+         SET insert_point = i + 1
+         SET i = rowcount + 1
+      END
+   END
+   INSERT_2DA_ROW insert_point 0 ~ECREDIT=1~
+BUT_ONLY
+
+// bioware's dragon logo is nonfunctional, so drop it from the movie list for now
+
+COPY_EXISTING movidesc.2da override REPLACE_TEXTUALLY ~bwdragon~ ~~ REPLACE_TEXTUALLY ~62089~ ~~

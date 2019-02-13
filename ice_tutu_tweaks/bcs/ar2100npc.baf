@@ -1,0 +1,9 @@
+IF
+  !Global("DW#SpawnedNPCs","AR2100",1)
+  GlobalGT("Vale_Quest","GLOBAL",0)
+THEN
+   RESPONSE #100
+      SetGlobal("DW#SpawnedNPCs","AR2100",1)
+      CreateCreature("dw#moran",[2432.1903],1)
+      Continue()
+END

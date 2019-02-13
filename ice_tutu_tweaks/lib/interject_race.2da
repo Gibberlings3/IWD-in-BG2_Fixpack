@@ -1,0 +1,17 @@
+DIALOG          RACE           REPLACEMENT     TRANSITION              TARGET      STRING    ACTION  JOURNAL
+dilmadia        ELF            Elyvir          11                      12          84864     Enemy() -
+dilmadia        ELF            Arris           11                      12          84864     Enemy() -
+dilmadia        DWARF          Ragnar          11                      12          84865     Enemy() -
+dilmadia        DWARF          Kori            11                      12          84865     Enemy() -
+dnym            ELF            Elyvir          0                       2           85102     - -
+dnym            ELF            Arris           0                       2           85102     - -
+dnym            DWARF          Kori            0                       2           85103     - -
+dnym            DWARF          Ragnar          0                       2           85103     - -
+dsoth           DWARF          Kori            8                       10          83401     - -
+dtiernon        DWARF          Ragnar          1                       49          98440     DisplayString(Player1,92617)AddXP2DA("Level_8_Easy")SetGlobal("Tiernon_Rep","GLOBAL",1) 97637
+dtiernon        DWARF          Kori            1                       49          98441     DisplayString(Player1,92617)AddXP2DA("Level_8_Easy")SetGlobal("Tiernon_Rep","GLOBAL",1) 97637
+dtiernon        DWARF          Kori            46                      50          98640     SetGlobal("Tiernon_Rep","GLOBAL",1) -
+dtiernon        DWARF          Ragnar          46                      50          98640     SetGlobal("Tiernon_Rep","GLOBAL",1) -
+dtiernon        DWARF          Kori            50                      46          98654     DisplayString(Player1,92617)AddXP2DA("Level_8_Easy") 97637
+dtiernon        DWARF          Ragnar          50                      46          98654     DisplayString(Player1,92617)AddXP2DA("Level_8_Easy") 97637
+dyxun           ELF            Arris           2                       11          76123     - -

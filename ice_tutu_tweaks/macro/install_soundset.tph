@@ -1,0 +1,65 @@
+DEFINE_PATCH_MACRO ~install_soundset~ BEGIN
+     SAY MORALE ~~ [%soundbase%#]
+     SAY LEADER ~~ [%soundbase%b]
+     SAY TIRED ~~ [%soundbase%c]
+     SAY BORED ~~ [%soundbase%d]
+     SAY BATTLE_CRY1 ~~ [%soundbase%8]
+     SAY BATTLE_CRY2 ~~ [%soundbase%9]
+     SAY BATTLE_CRY3 ~~ [%soundbase%a]
+     SAY DAMAGE ~~ [%soundbase%l]
+     SAY DYING ~~ [%soundbase%m]
+     SAY HURT ~~ [%soundbase%e]
+     SAY REACT_TO_DIE_GENERAL ~~ [%soundbase%*]
+     SAY REACT_TO_DIE_SPECIFIC ~~ [%soundbase%!]
+     SAY SELECT_COMMON1 ~~ [%soundbase%0]
+     SAY SELECT_COMMON2 ~~ [%soundbase%f]
+     SAY SELECT_COMMON3 ~~ [%soundbase%g]
+     SAY SELECT_COMMON4 ~~ [%soundbase%h]
+     SAY SELECT_ACTION1 ~~ [%soundbase%i]
+     SAY SELECT_ACTION2 ~~ [%soundbase%j]
+     SAY SELECT_ACTION3 ~~ [%soundbase%k]
+     SAY SELECT_ACTION4 ~~ [%soundbase%s]
+     SAY SELECT_ACTION5 ~~ [%soundbase%t]
+     SAY SELECT_ACTION6 ~~ [%soundbase%u]
+     SAY SELECT_ACTION7 ~~ [%soundbase%v]
+     SAY SELECT_RARE1 ~~ [%soundbase%x]
+     SAY SELECT_RARE2 ~~ [%soundbase%y]
+     SAY CRITICAL_HIT ~~ [%soundbase%z]
+     WRITE_LONG CRITICAL_MISS ~-1~
+     WRITE_LONG TARGET_IMMUNE ~-1~
+     WRITE_LONG PICKED_POCKET ~-1~
+     WRITE_LONG EXISTANCE1 ~-1~
+     WRITE_LONG EXISTANCE2 ~-1~
+     WRITE_LONG EXISTANCE3 ~-1~
+
+
+
+END
+
+
+<<<<<<<< sound_set_map
+03 8    battlecry
+04 9    battlecry
+16 0    selection
+23 _    action
+05 a    battlecry
+08 b    becoming leader
+10 c    tired
+12 d    bored
+15 e    badly wounded
+17 f    selection
+18 g    selection
+19 h    selection
+24 i    action
+25 j    action
+26 k    action
+34 l    being hit
+37 m    dying
+27 s    action
+28 t    action
+29 u    action
+23 v    action
+30 x    rare select
+31 y    rare select
+06 z    critical hit
+>>>>>>>>

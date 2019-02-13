@@ -1,0 +1,36 @@
+DEFINE_ACTION_FUNCTION find_cre_created_at_loc
+     INT_VAR xloc=0
+             yloc=0
+     STR_VAR script=""
+             loc=""
+     RET     crefile
+             loc
+BEGIN
+  ACTION_IF FILE_EXISTS_IN_GAME ~%script%.bcs~ BEGIN
+   LAF action_return_first_entry STR_VAR list=EVALUATE_BUFFER ~%loc%~ RET loc=list firstloc=entry END
+   PRINT ~%firstloc%~
+   OUTER_PATCH_SAVE firstloc ~%firstloc%~ BEGIN
+      REPLACE_TEXTUALLY ~\.~ ~ ~
+      REPLACE_TEXTUALLY ~\[~ ~~
+      REPLACE_TEXTUALLY ~\]~ ~~
+   END
+   LAF action_return_first_entry STR_VAR list=EVALUATE_BUFFER ~%firstloc%~ RET yloc=list xloc=entry END
+
+   COPY_EXISTING ~%script%.bcs~ ~override~
+      DECOMPILE_AND_PATCH BEGIN
+         SET start_loc=INDEX_BUFFER (CASE_INSENSITIVE EVALUATE_BUFFER ~("[a-z0-9#_]+",\[%xloc%\.%yloc%\]~) + 2
+         //SET start_loc=INDEX_BUFFER (CASE_INSENSITIVE EVALUATE_BUFFER ~[%xloc%\.%yloc\]~) + 2
+          PATCH_IF start_loc = 1 BEGIN
+              PATCH_WARN "Warning: no creature at location %xloc%.%yloc% created in script %script%"
+              SPRINT ~crefile~ ""
+          END ELSE BEGIN
+             SET end_loc=INDEX_BUFFER (CASE_INSENSITIVE ~",\[%xloc%\.%yloc%\]~)
+             READ_ASCII start_loc crefile (end_loc - start_loc)
+          END
+      END
+   BUT_ONLY
+  END ELSE BEGIN
+      WARN "Warning: script %script% does not exist, so prospect of finding a creature in it are remote"
+      OUTER_SPRINT ~crefile~ ""
+  END
+END

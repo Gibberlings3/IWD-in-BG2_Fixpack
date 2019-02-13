@@ -1,0 +1,138 @@
+DEFINE_ACTION_MACRO ~SSL~ BEGIN
+      ACTION_IF !VARIABLE_IS_SET $scs_ini_hash(~Disable_SSL_Compilation~) BEGIN
+        OUTER_SET $scs_ini_hash(~Disable_SSL_Compilation~)=0
+      END
+      ACTION_IF $scs_ini_hash(~Disable_SSL_Compilation~)=0 BEGIN
+	<<<<<<<< .../stratagems-inline/blank.txt
+
+	>>>>>>>>
+
+        ACTION_IF !FILE_EXISTS ~stratagems\ssl\autolib.slb~ THEN BEGIN
+	   COPY ~.../stratagems-inline/blank.txt~ ~stratagems\ssl\autolib.slb~
+        END
+
+
+	COPY ~.../stratagems-inline/ssl.2da~ ~.../stratagems-inline~
+		COUNT_2DA_ROWS 1 ~rowcount~
+		FOR (i=0;i<~%rowcount%~;i=i+1) BEGIN
+			READ_2DA_ENTRY ~%i%~ 0 1 ~filename~
+			INNER_ACTION BEGIN
+				ACTION_IF ~%WEIDU_OS%~ STRING_COMPARE_CASE ~WIN32~ THEN BEGIN
+					AT_NOW ~chmod 755 stratagems/ssl/ssl.pl~
+					AT_NOW ~/usr/bin/perl stratagems/ssl/ssl.pl "%filename% %sslvariables% -l stratagems/ssl/library stratagems/ssl/autolib"~ EXACT
+				END ELSE BEGIN
+					AT_NOW ~stratagems\ssl\ssl.exe "%filename% %sslvariables% -l stratagems\ssl\library stratagems\ssl\autolib"~
+				END
+			END
+		END
+	BUT_ONLY_IF_IT_CHANGES
+     END ELSE BEGIN
+        PRINT ~WARNING: SSL compilation disabled~
+     END
+END
+
+DEFINE_ACTION_MACRO ~generate_SSL_autolib~ BEGIN
+
+	<<<<<<<< .../stratagems-inline/blank.txt
+
+	>>>>>>>>
+
+	COPY ~.../stratagems-inline/blank.txt~ ~stratagems\ssl\autolib.slb~
+
+	COPY_EXISTING ~stratagems\ssl\sillyitems.txt~ ~override~
+		COUNT_2DA_ROWS 1 ~sillynum~
+		FOR (i=0;i<~%sillynum%~;i=i+1) BEGIN
+			READ_2DA_ENTRY ~%i%~ 0 1 ~itemname~
+			SPRINT $sillyitem(~%i%~) ~%itemname%~
+		END
+	BUT_ONLY_IF_IT_CHANGES
+		
+
+
+	COPY_EXISTING ~stratagems\ssl\libdata.txt~ ~override~
+		SET ~outputrownum~=0
+		COUNT_2DA_ROWS 1 ~rownum~
+		FOR (i=0;i<~%rownum%~;i=i+1) BEGIN
+			READ_2DA_ENTRY ~%i%~ 0 2 ~thevar~
+			READ_2DA_ENTRY ~%i%~ 1 2 ~thetype~
+			READ_2DA_ENTRY ~%i%~ 2 2 ~thevarname~
+			INNER_ACTION BEGIN
+				COPY ~stratagems\ssl\autolib.slb~ ~stratagems\ssl~
+					INSERT_2DA_ROW ~%outputrownum%~ 0 ~TRIGGER=%thevarname%~
+				SET ~outputrownum~=~%outputrownum%~+1
+				COPY_EXISTING_REGEXP GLOB ~.+\.itm$~ ~override~
+	//			COPY_EXISTING ~sper06.itm~ ~override~
+					SPRINT ~itemname~ ~%SOURCE_RES%~
+  					PATCH_IF (SOURCE_SIZE > 0x71) THEN BEGIN // protects against invalid files - borrowed from TutuTweaks
+						READ_BYTE 0x18 ~droppablebyte~
+						PATCH_IF ((~%droppablebyte%~ BAND ~0b00000100~)=~0b00000100~) THEN BEGIN
+							READ_LONG 0x6a ~effoffset~
+							READ_SHORT 0x70 ~numeffects~
+							SET ~numglobalsofar~=0
+							SET ~result~=0
+							SET ~killresult~=0
+							PATCH_IF (~thetype~=101) THEN BEGIN
+								SET ~isbroken~=0
+								WHILE (~numglobalsofar~<~numeffects~ AND ~%isbroken%~=0) BEGIN
+									SET ~editloc~=~%effoffset%~+0x30*~%numglobalsofar%~
+									PATCH_IF ~%editloc%~+0x30<=~%SOURCE_SIZE%~ THEN BEGIN
+										READ_SHORT ~%editloc%~ ~type~
+										READ_SHORT ~%editloc%~+0x8 ~effect~
+										READ_BYTE ~%editloc%~+0xc ~equipcheck~
+										PATCH_IF (~%type%~=101 AND ~%effect%~=~%thevar%~ AND ~%equipcheck%~=2) THEN BEGIN
+											SET ~result~=1
+										END 
+										SET ~numglobalsofar~=~numglobalsofar~+1
+									END ELSE BEGIN
+										SET ~isbroken~=1
+									END
+								END
+							END
+							PATCH_IF (~thetype~=206) THEN BEGIN
+								SET ~isbroken~=0
+								WHILE (~numglobalsofar~<~numeffects~ AND ~%isbroken%~=0) BEGIN
+									SET ~editloc~=~%effoffset%~+0x30*~%numglobalsofar%~
+									PATCH_IF ~%editloc%~+0x30<=~%SOURCE_SIZE%~ THEN BEGIN
+										READ_SHORT ~%editloc%~ ~type~
+										READ_ASCII ~%editloc%~+0x14 ~effect~
+										READ_BYTE ~%editloc%~+0xc ~equipcheck~
+										PATCH_IF (~%type%~=206 AND NOT ~%effect%~ STRING_COMPARE_CASE ~%thevar%~ = 1 AND ~%equipcheck%~=2) THEN BEGIN
+											SET ~result~=1
+										END 
+										SET ~numglobalsofar~=~numglobalsofar~+1
+									END ELSE BEGIN
+										SET ~isbroken~=1
+																			END
+								END
+							END
+							PATCH_IF ~%result%~=1 THEN BEGIN
+								FOR (j=0;j<~%sillynum%~;j=j+1) BEGIN
+									PATCH_IF ~%itemname%~ STRING_EQUAL_CASE $sillyitem(~%j%~) THEN BEGIN
+										SET ~result~=0
+									END
+								END
+							END
+
+							PATCH_IF ~%result%~=1 AND ~%isbroken%~=0 THEN BEGIN
+								INNER_ACTION BEGIN
+									COPY ~stratagems\ssl\autolib.slb~ ~stratagems\ssl~
+										INSERT_2DA_ROW ~%outputrownum%~ 0 ~!HasItemEquiped("%itemname%",scstarget)~
+									SET ~outputrownum~=~%outputrownum%~+1
+								END
+							END
+							PATCH_IF ~%isbroken%~=1 THEN BEGIN
+								PATCH_PRINT ~SCS warning: %SOURCE_RES% is corrupt (probably caused by another mod) so I'm skipping it~
+							END
+						END
+					END
+					
+				BUT_ONLY_IF_IT_CHANGES	
+			END
+		END	
+	BUT_ONLY_IF_IT_CHANGES
+
+
+
+
+END
+

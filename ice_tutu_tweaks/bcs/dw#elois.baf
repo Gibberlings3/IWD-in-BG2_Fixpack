@@ -1,0 +1,16 @@
+IF
+  !InParty(Myself)
+  AreaCheck("ar1008")
+THEN
+    RESPONSE #100
+             RandomWalk()
+END
+
+IF 
+   !InParty(Myself)
+   AreaCheck("ar1016")
+   NumTimesTalkedTo(0)
+THEN
+    RESPONSE #100
+             StartDialogNoSet(Player1)
+END

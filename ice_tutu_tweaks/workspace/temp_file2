@@ -1,0 +1,2 @@
+        ACTION_DEFINE_ASSOCIATIVE_ARRAY temp_assoc BEGIN type=>effect match=>resource check=>spin106 opcode=>999 END
+        

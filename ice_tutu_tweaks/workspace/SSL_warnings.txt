@@ -1,0 +1,2 @@
+
+Component with label:i#bg2spells

@@ -1,0 +1,22 @@
+IF
+  InParty(Myself)
+  HPGT(Myself,0)
+  Global("Caravan_Quest","GLOBAL",2)
+  Global("orcinterject","LOCALS",0)
+THEN
+    RESPONSE #100
+        SetGlobal("orcinterject","LOCALS",1)
+        StartDialogNoSet(Player1)
+END
+
+IF
+  InParty(Myself)
+  HPGT(Myself,0)
+  CombatCounter(0)
+  Dead("ecogre")
+  !GlobalGT("orcinterject","LOCALS",2)
+THEN
+    RESPONSE #100
+        SetGlobal("orcinterject","LOCALS",3)
+        StartDialogNoSet(Player1)
+END

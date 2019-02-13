@@ -1,0 +1,8 @@
+IF
+  !Global("DW#SpawnedNPCs","AR2108",1)
+THEN 
+   RESPONSE #100
+      SetGlobal("DW#SpawnedNPCs","AR2108",1)
+      CreateCreature("dw#arris",[169.143],6)
+      Continue()
+END

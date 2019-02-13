@@ -1,0 +1,21 @@
+DIALOG          ENTRY                                REPLACEMENT    TRANSITION              TARGET      STRING    ACTION  JOURNAL
+daldwin         !Alignment(LastTalkedToBy,MASK_GOOD) Marcus         18                      19          76887     IncrementGlobal("Chaotic_Aldwin_3","GLOBAL",-1)IncrementGlobal("Law","GLOBAL",-1)IncrementGlobal("Evil_Aldwin_3","GLOBAL",-1)IncrementGlobal("Good","GLOBAL",-1) -
+dbaldemr        Alignment(LastTalkedToBy,MASK_EVIL)  Marcus         13                      14          99668     -                                                                                                                                                                -
+dgareth         Alignment(LastTalkedToBy,MASK_EVIL)  Marcus         12                      13          81973     - -
+dgoblinc        Alignment(LastTalkedToBy,MASK_EVIL)  Marcus         4                       8           75106     - -
+dhailee         Alignment(LastTalkedToBy,MASK_EVIL)  Marcus         1                       5           96484     - -
+dhailee         Alignment(LastTalkedToBy,MASK_EVIL)  Marcus         5                       6           96494     - -
+dhailee         Alignment(LastTalkedToBy,MASK_EVIL)  Marcus         6                       7           96499     SetGlobal("Hailee_Joke","GLOBAL",4)DisplayString(Player1,92625)AddXP2DA("Level_6_Easy") 108206
+dhailee         Class(LastTalkedToBy,BARD_ALL)       Eloise         26                      31          96566     SetGlobal("Fish_Story","GLOBAL",1) -
+dhailee         Class(LastTalkedToBy,BARD_ALL)       Eloise         30                      31          96581     - -
+dhailee         Class(LastTalkedToBy,BARD_ALL)       Eloise         31                      32          96583     - -
+dhailee         Class(LastTalkedToBy,BARD_ALL)       Eloise         32                      33          96585     - -
+dhailee         Class(LastTalkedToBy,BARD_ALL)       Eloise         34                      35          96587     DisplayString(Player1,92615)AddXP2DA("Level_6_Easy") 108191
+dsoth           Class(LastTalkedToBy,CLERIC_ALL)     Ilauna         8                       10          83402     - -
+dharpy          !Alignment(LastTalkedToBy,MASK_GOOD) Ragnar         5                       1           101612    - -                                                                                       -
+dharpy          !Alignment(LastTalkedToBy,MASK_GOOD) Ragnar         7                       1           101618    - -
+dhobart         Alignment(LastTalkedToBy,MASK_EVIL)  Marcus         0                       5           101062    - -
+djoril          Alignment(LastTalkedToBy,MASK_EVIL)  Marcus         8                       9           83075     - -
+dnorlino        null_sub                             Vilmar         12                      13          92527     - -
+dtiernon        null_sub                             Vilmar         2                       3           98446     - -
+
